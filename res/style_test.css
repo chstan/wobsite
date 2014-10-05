@@ -1,16 +1,63 @@
-body {
+body, a {
     font-family: 'Roboto', Helvetica, sans-serif;
 }
 
-nav {
-    
+a, p {
+    font-size: 14px;
 }
 
-h1 {
-    font-family: 'Roboto Slab', Georgia, serif;
+a {
+    text-decoration: none;
+    color: #444;
     font-weight: 400;
 }
 
-p {
+.container {
+    position: relative;
+    padding-top: 60px;
+    width: 960px;
+    margin: 0 auto;
+}
+
+.container .container2 {
+    float: left;
+    display: inline;
+    margin-left: 10px;
+    margin-right: 10px;
+    width: 120px;
+}
+
+.landing-content {
+    position: absolute;
+    left: 160px;
+    margin: 0 0 0 0;
+    padding-left: 60px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 400;
+}
+
+#name-header {
+    font-family: 'Roboto Slab', Georgia, serif;
+    font-weight: 400;
+    margin-bottom: 100px;
+}
+
+nav ul {
+    float: left;
+}
+
+ul {
+    list-style: none outside;
+    margin: 0 0 20px 0;
+    padding:0;
+}
+
+li {
+    padding:0 0 8px 0;
+}
+
+p, href {
     font-weight: 300;
 }
