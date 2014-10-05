@@ -5,6 +5,8 @@ import ResponseRequest
 import Routes
 import Aux
 
+-- throw a random request at the router
+
 fourOhFourResponse :: String -> ContentDescType -> Response
 fourOhFourResponse b c = Response { version = "HTTP/1.1",
                                   statuscode = 404,
