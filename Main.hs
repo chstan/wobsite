@@ -44,21 +44,32 @@ parseRequest l = case (words (head l)) of
               options = (parseOptions (tail l))}
 
 handleAccept :: Handle -> String -> IO ()
-handleAccept handle hostname = do
+handleAccept handle _ = do
   request <- fmap (parseRequest . lines) (hGetContents handle)
   respond request handle
   return ()
 
+welcomeMessage :: (Show a, Num a) => a -> IO ()
+welcomeMessage pn = do
+  putStrLn "Serving is starting up..."
+  putStrLn $ "Preparing to serve requests on " ++ (show pn)
+
+acceptingPort :: (Num a) => a
+acceptingPort = 3000
+
+main :: IO ()
 main = withSocketsDo $ do
-    sock <- listenOn $ PortNumber 3000
+    welcomeMessage (acceptingPort :: Integer)
+    sock <- listenOn $ PortNumber acceptingPort
     loop sock
 
+loop :: Socket -> IO ()
 loop sock = do
-   (handle,hostname,port) <- accept sock
-   forkIO $ body handle hostname
+   (handle,hostname,_) <- accept sock
+   forkIO $ daemon handle hostname
    loop sock
   where
-   body handle hostname = do
+   daemon handle hostname = do
        handleAccept handle hostname
        hFlush handle
        hClose handle
