@@ -19,6 +19,10 @@ a {
     margin: 0 auto;
 }
 
+body, div, p, h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+}
+
 .container .container2 {
     float: left;
     display: inline;
@@ -36,6 +40,99 @@ a {
 
 h1, h2, h3, h4, h5, h6 {
     font-weight: 400;
+}
+
+#content-header {
+    height: 150px;
+}
+
+#resume {
+    width: 720px;
+}
+
+.just-left-container {
+    float: left;
+}
+
+.just-right-container {
+    float: right;
+}
+
+.just-left-container p {
+    text-align: left;
+}
+
+.just-right-container p {
+    text-align: right;
+}
+
+.just-left, .just-right {
+    vertical-align: top;
+    display: inline;
+}
+
+.just-container {
+    overflow: hidden;
+    width: 100%;
+}
+
+.just-left {
+    text-align: left;
+}
+
+.just-right {
+    text-align: right;
+}
+
+.resume-section {
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+
+.content-leader {
+    margin-bottom: 5px;
+}
+
+.landing-content {
+    padding-bottom: 150px;
+}
+
+.resume-paragraphs p {
+    text-align: justify;
+}
+
+.resume-section-content > :last-child {
+    margin-bottom: 0px;
+}
+
+.resume-paragraphs {
+    margin-bottom: 20px;
+}
+
+.resume-paragraphs p {
+    margin-bottom: 5px;
+}
+
+.resume-section-title {
+    width: 140px;
+}
+
+.resume-section-content {
+    width: 580px;
+}
+
+.resume-section-content, .resume-section-title {
+    float: left;
+}
+
+#resume-header {
+    margin-bottom: 20px;
+}
+
+.hruled {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #888;
+    margin-bottom: 5px;
 }
 
 #name-header {

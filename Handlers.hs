@@ -3,6 +3,7 @@ module Handlers
         fourOhFourHandler,
         resourceHandler,
         indexHandler,
+        resumeHandler,
         echoHandler) where
 
 import ResponseRequest
@@ -26,4 +27,7 @@ resourceHandler :: String -> RequestHandler
 resourceHandler s req = fileHandler ("res/" ++ s) req
 
 indexHandler :: RequestHandler
-indexHandler = fileHandler "res/index.html"
+indexHandler = resourceHandler "index.html"
+
+resumeHandler :: RequestHandler
+resumeHandler = resourceHandler "resume.html"

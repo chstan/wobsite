@@ -11,10 +11,12 @@ import Aux
 route1Free :: Route RequestHandler
 route1Free =
   choice [ do matchNone
-              return $ indexHandler
+              return indexHandler
+         , do match "resume"
+              return resumeHandler
          , do match "echo"
               matchNone
-              return $ echoHandler
+              return echoHandler
          , do match "resource"
               resourceLocation <- capture $ return . id
               return $ resourceHandler resourceLocation
