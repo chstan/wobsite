@@ -4,3 +4,6 @@
 # Cabal
 dist/
 
+# Deployment files
+configuration
+
