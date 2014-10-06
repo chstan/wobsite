@@ -30,8 +30,6 @@ parseOptionsHelper (f:xs) acc
   value = unwords . tail . words $ f
   builtOption = (option, value)
 
-
-
 parseOptions :: [String] -> [(String, String)]
 parseOptions l = parseOptionsHelper l []
 
@@ -54,14 +52,13 @@ welcomeMessage pn = do
   putStrLn "Serving is starting up..."
   putStrLn $ "Preparing to serve requests on " ++ (show pn)
 
-acceptingPort :: (Num a) => a
-acceptingPort = 3000
-
 main :: IO ()
 main = withSocketsDo $ do
-    welcomeMessage (acceptingPort :: Integer)
-    sock <- listenOn $ PortNumber acceptingPort
-    loop sock
+  contents <- readFile "configuration"
+  welcomeMessage (read contents :: Int)
+  sock <- listenOn $ PortNumber $ fromIntegral
+          $ (read :: String -> Integer) contents
+  loop sock
 
 loop :: Socket -> IO ()
 loop sock = do
