@@ -1,6 +1,12 @@
-import Network
+{-# LANGUAGE OverloadedStrings #-}
+import qualified Data.ByteString.Lazy.Char8 as BSL8
+
+import Network hiding (accept)
+import Network.Socket
+--import Network.Socket.ByteString (send)
+import Network.Socket.ByteString.Lazy as NSBL (getContents, sendAll)
 import Control.Concurrent
-import System.IO
+import System.IO hiding (getContents)
 import ResponseRequest
 import App
 import Middleware
@@ -8,43 +14,43 @@ import Middleware
 appWithMiddleware :: Request -> IO Response
 appWithMiddleware = (application . breakPath)
 
-respond :: Request -> Handle -> IO ()
-respond request handle = do
-  response <- appWithMiddleware request
-  hPutStr handle $ (show response)
+respond :: Request -> Socket -> IO ()
+respond req c  = do
+  response <- appWithMiddleware req
+  NSBL.sendAll c $ BSL8.pack $ show response
 
-parseRequestType :: String -> RequestType
+parseRequestType :: BSL8.ByteString -> RequestType
 parseRequestType s = case s of
   "GET" -> GET
   "POST" -> POST
   "PUT" -> PUT
   "DELETE" -> DELETE
 
-parseOptionsHelper :: [String] -> [(String, String)] -> [(String, String)]
+parseOptionsHelper :: [BSL8.ByteString] -> [(String, String)] -> [(String, String)]
 parseOptionsHelper [] acc = acc
 parseOptionsHelper (f:xs) acc
-  | (length (words f)) < 2 = acc
+  | (length (BSL8.words f)) < 2 = acc
   | otherwise = parseOptionsHelper xs (acc ++ [builtOption])
  where
-  option = reverse . tail . reverse . head . words $ f
-  value = unwords . tail . words $ f
+  option = reverse . tail . reverse . head . words $ BSL8.unpack f
+  value = unwords . tail . words $ BSL8.unpack f
   builtOption = (option, value)
 
-parseOptions :: [String] -> [(String, String)]
+parseOptions :: [BSL8.ByteString] -> [(String, String)]
 parseOptions l = parseOptionsHelper l []
 
-parseRequest :: [String] -> Request
-parseRequest l = case (words (head l)) of
+parseRequest :: [BSL8.ByteString] -> Request
+parseRequest l = case (BSL8.words (head l)) of
   -- Should really do some additional validation of the request
   [recvType, recvPath, recvMethod] ->
     Request { rtype = (parseRequestType recvType),
-              path = RawPath recvPath,
+              path = RawPath $ BSL8.unpack recvPath,
               options = (parseOptions (tail l))}
 
-handleAccept :: Handle -> String -> IO ()
-handleAccept handle _ = do
-  request <- fmap (parseRequest . lines) (hGetContents handle)
-  respond request handle
+connectionAccept :: Socket -> IO ()
+connectionAccept c = do
+  request <- fmap (parseRequest . BSL8.lines) (NSBL.getContents c)
+  respond request c
   return ()
 
 welcomeMessage :: (Show a, Num a) => a -> IO ()
@@ -62,11 +68,10 @@ main = withSocketsDo $ do
 
 loop :: Socket -> IO ()
 loop sock = do
-   (handle,hostname,_) <- accept sock
-   forkIO $ daemon handle hostname
+   (connection,_) <- accept sock
+   forkIO $ daemon connection
    loop sock
   where
-   daemon handle hostname = do
-       handleAccept handle hostname
-       hFlush handle
-       hClose handle
+   daemon c = do
+       connectionAccept c
+       Network.Socket.sClose c
