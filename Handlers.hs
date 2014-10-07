@@ -6,21 +6,22 @@ module Handlers
         resumeHandler,
         echoHandler) where
 
+import Data.ByteString.Lazy.Char8 as BSL8
 import ResponseRequest
 import Aux                 (inferContentDescType)
 
 type RequestHandler = Request -> IO Response
 
 echoHandler :: RequestHandler
-echoHandler req = return $ Response "HTTP/1.1" 200 TEXT_PLAIN (show req)
+echoHandler req = return $ Response "HTTP/1.1" 200 TEXT_PLAIN (pack $ show req)
 
 fourOhFourHandler :: RequestHandler
 fourOhFourHandler _ = return $ Response "HTTP/1.1" 404
-                        TEXT_PLAIN "Oh man! 404..."
+                      TEXT_PLAIN (pack $ "Oh man! 404...")
 
 fileHandler :: String -> RequestHandler
 fileHandler s _ = do
-  contents <- readFile s
+  contents <- BSL8.readFile s
   return $ Response "HTTP/1.1" 200 (inferContentDescType s) contents
 
 resourceHandler :: String -> RequestHandler

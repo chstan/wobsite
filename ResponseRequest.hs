@@ -15,6 +15,8 @@ module ResponseRequest
        , contentDescription
        , body) where
 
+import Data.ByteString.Lazy.Char8 as BSL8
+
 data PathType = RawPath { raw :: String }
               | ProcessedPath { processed :: [String] } deriving (Show)
 
@@ -34,7 +36,7 @@ instance Show ContentDescType where
 data Response = Response { version :: String,
                            statuscode :: Int,
                            contentDescription :: ContentDescType,
-                           body :: String }
+                           body :: ByteString }
 
 instance Show Response where
   show resp = version(resp) ++ " " ++ show(statuscode(resp)) ++
@@ -43,5 +45,5 @@ instance Show Response where
     200 -> "OK"
     404 -> "Not Found") ++ "\r\n" ++
               "Content-Type: " ++ show(contentDescription(resp)) ++ "\r\n" ++
-              "Content-Length: " ++ show(length $ body(resp)) ++ "\r\n" ++
-              "\r\n" ++ body(resp) ++ "\r\n"
+              "Content-Length: " ++ show(BSL8.length $ body resp) ++ "\r\n" ++
+              "\r\n" ++ (unpack $ body resp) ++ "\r\n"

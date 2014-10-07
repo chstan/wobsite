@@ -55,7 +55,7 @@ connectionAccept c = do
 
 welcomeMessage :: (Show a, Num a) => a -> IO ()
 welcomeMessage pn = do
-  putStrLn "Serving is starting up..."
+  putStrLn "Server is starting up..."
   putStrLn $ "Preparing to serve requests on " ++ (show pn)
 
 main :: IO ()
