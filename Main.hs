@@ -3,10 +3,8 @@ import qualified Data.ByteString.Lazy.Char8 as BSL8
 
 import Network hiding (accept)
 import Network.Socket
---import Network.Socket.ByteString (send)
 import Network.Socket.ByteString.Lazy as NSBL (getContents, sendAll)
 import Control.Concurrent
-import System.IO hiding (getContents)
 import ResponseRequest
 import App
 import Middleware
@@ -42,7 +40,7 @@ parseOptions l = parseOptionsHelper l []
 parseRequest :: [BSL8.ByteString] -> Request
 parseRequest l = case (BSL8.words (head l)) of
   -- Should really do some additional validation of the request
-  [recvType, recvPath, recvMethod] ->
+  [recvType, recvPath, _] ->
     Request { rtype = (parseRequestType recvType),
               path = RawPath $ BSL8.unpack recvPath,
               options = (parseOptions (tail l))}

@@ -1,6 +1,8 @@
 module ResponseRequest
        ( RequestType (GET, POST, PUT, DELETE)
        , PathType (RawPath, ProcessedPath)
+       , raw
+       , processed
        , Request (Request)
        , ContentDescType (HTML,
                           PLAIN,

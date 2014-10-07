@@ -28,7 +28,7 @@ tailSafe [] = []
 tailSafe l = tail l
 
 oneAndMatches :: (Eq a) => a -> [a] -> Bool
-oneAndMatches p [] = False
-oneAndMatches p (x:xs)
+oneAndMatches _ [] = False
+oneAndMatches p (x:_)
   | p == x = True
   | otherwise = False
