@@ -4,7 +4,6 @@ module App
 import ResponseRequest
 import Handlers
 import Routes
-import Aux
 
 -- throw a random request at the router
 
@@ -17,6 +16,10 @@ route1Free =
          , do match "echo"
               matchNone
               return echoHandler
+         , do match "super"
+              match "secret"
+              match "cat"
+              return catHandler
          , do match "resource"
               resourceLocation <- capture $ return . id
               return $ resourceHandler resourceLocation

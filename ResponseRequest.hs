@@ -2,10 +2,11 @@ module ResponseRequest
        ( RequestType (GET, POST, PUT, DELETE)
        , PathType (RawPath, ProcessedPath)
        , Request (Request)
-       , ContentDescType (TEXT_HTML,
-                          TEXT_PLAIN,
-                          TEXT_CSS,
-                          PDF)
+       , ContentDescType (HTML,
+                          PLAIN,
+                          CSS,
+                          PDF,
+                          JPEG)
        , Response (Response)
        , rtype
        , path
@@ -25,13 +26,14 @@ data Request = Request { rtype :: RequestType,
                          path :: PathType,
                          options :: [(String, String)] } deriving (Show)
 
-data ContentDescType = TEXT_HTML | TEXT_PLAIN | TEXT_CSS | PDF
+data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG
 instance Show ContentDescType where
   show c = case c of
-    TEXT_HTML -> "text/html"
-    TEXT_PLAIN -> "text/plain"
-    TEXT_CSS -> "text/css"
+    HTML -> "text/html"
+    PLAIN -> "text/plain"
+    CSS -> "text/css"
     PDF -> "application/pdf"
+    JPEG -> "image/jpeg"
 
 data Response = Response { version :: String,
                            statuscode :: Int,

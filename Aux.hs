@@ -16,10 +16,12 @@ pairFn fn1 fn2 el =
 
 inferContentDescType :: String -> ContentDescType
 inferContentDescType loc = case takeExtension loc of
-  ".css" -> TEXT_CSS
-  ".html" -> TEXT_HTML
+  ".css" -> CSS
+  ".html" -> HTML
   ".pdf" -> PDF
-  _ -> TEXT_PLAIN
+  ".jpg" -> JPEG
+  ".jpeg" -> JPEG -- REFACTOR INTO GUARD
+  _ -> PLAIN
 
 tailSafe :: [a] -> [a]
 tailSafe [] = []
