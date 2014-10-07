@@ -18,6 +18,7 @@ inferContentDescType :: String -> ContentDescType
 inferContentDescType loc = case takeExtension loc of
   ".css" -> TEXT_CSS
   ".html" -> TEXT_HTML
+  ".pdf" -> PDF
   _ -> TEXT_PLAIN
 
 tailSafe :: [a] -> [a]

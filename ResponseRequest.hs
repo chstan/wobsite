@@ -4,7 +4,8 @@ module ResponseRequest
        , Request (Request)
        , ContentDescType (TEXT_HTML,
                           TEXT_PLAIN,
-                          TEXT_CSS)
+                          TEXT_CSS,
+                          PDF)
        , Response (Response)
        , rtype
        , path
@@ -22,12 +23,13 @@ data Request = Request { rtype :: RequestType,
                          path :: PathType,
                          options :: [(String, String)] } deriving (Show)
 
-data ContentDescType = TEXT_HTML | TEXT_PLAIN | TEXT_CSS
+data ContentDescType = TEXT_HTML | TEXT_PLAIN | TEXT_CSS | PDF
 instance Show ContentDescType where
   show c = case c of
     TEXT_HTML -> "text/html"
     TEXT_PLAIN -> "text/plain"
     TEXT_CSS -> "text/css"
+    PDF -> "application/pdf"
 
 data Response = Response { version :: String,
                            statuscode :: Int,
