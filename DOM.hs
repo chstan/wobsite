@@ -3,12 +3,11 @@ module DOM
 
 import Data.Tree
 import Data.Char (intToDigit)
-import Control.Monad (when, fail)
 import Text.Parsec
 import Text.Parsec.String
-import Text.Parsec.Expr
 import qualified Text.Parsec.Token as Token
-import Text.Parsec.Language
+
+import Aux (dummyParam)
 
 type DOM = Tree HTMLNode
 
@@ -34,6 +33,39 @@ data HTMLNode = ROOT           NodeAttribute
               | CUSTOM String  NodeAttribute
               | EMPTY
                 deriving (Show)
+
+uniformConsFromName :: String -> NodeAttribute -> HTMLNode
+uniformConsFromName "html" = HTML
+uniformConsFromName "ul" = ULIST
+uniformConsFromName "ol" = OLIST
+uniformConsFromName "li" = LISTELEM
+uniformConsFromName "head" = HEAD
+uniformConsFromName "body" = BODY
+uniformConsFromName "a" = ANCHOR
+uniformConsFromName "p" = PARAGRAPH
+uniformConsFromName "div" = DIV
+uniformConsFromName "nav" = NAV
+uniformConsFromName "title" = dummyParam TITLE
+
+parseUniformTag :: String -> Parser DOM
+parseUniformTag tag_label = do
+  attributes <- parseTagStart tag_label
+  children <- many parseDOM
+  parseTagEnd tag_label
+  return $ Node (uniformConsFromName tag_label
+                attributes) children
+
+parseHTMLTag = parseUniformTag "html"
+parseUListTag = parseUniformTag "ul"
+parseOListTag = parseUniformTag "ol"
+parseListElemTag = parseUniformTag "li"
+parseHeadTag = parseUniformTag "head"
+parseBodyTag = parseUniformTag "body"
+parseAnchorTag = parseUniformTag "a"
+parsePTag = parseUniformTag "p"
+parseDivTag = parseUniformTag "div"
+parseNavTag = parseUniformTag "nav"
+parseTitleTag = parseUniformTag "title"
 
 attributeLexerStyle :: Token.LanguageDef ()
 attributeLexerStyle = Token.LanguageDef
@@ -110,41 +142,6 @@ parseTagEnd tag_label = do
   string $ "</" ++ tag_label ++ ">"
   return ()
 
-parseHTMLTag :: Parser DOM
-parseHTMLTag = do
-  attributes <- parseTagStart "html"
-  children <- many parseDOM
-  parseTagEnd "html"
-  return $ Node (HTML attributes) children
-
-parseNavTag :: Parser DOM
-parseNavTag = do
-  attributes <- parseTagStart "nav"
-  children <- many parseDOM
-  parseTagEnd "nav"
-  return $ Node (NAV attributes) children
-
-parseDivTag :: Parser DOM
-parseDivTag = do
-  attributes <- parseTagStart "div"
-  children <- many parseDOM
-  parseTagEnd "div"
-  return $ Node (DIV attributes) children
-
-parseBodyTag :: Parser DOM
-parseBodyTag = do
-  attributes <- parseTagStart "body"
-  children <- many parseDOM
-  parseTagEnd "body"
-  return $ Node (BODY attributes) children
-
-parseHeadTag :: Parser DOM
-parseHeadTag = do
-  attributes <- parseTagStart "head"
-  children <- many parseDOM
-  parseTagEnd "head"
-  return $ Node (HEAD attributes) children
-
 parseLinkTag :: Parser DOM
 parseLinkTag = do
   attributes <- parseStandaloneTag "link"
@@ -179,48 +176,6 @@ parseHeadingTag = do
   parseHeadingTagEnd n
   return $ Node (HEADING n attributes) children
 
-parseOListTag :: Parser DOM
-parseOListTag = do
-  attributes <- parseTagStart "ol"
-  children <- many parseDOM
-  parseTagEnd "ol"
-  return $ Node (OLIST attributes) children
-
-parseUListTag :: Parser DOM
-parseUListTag = do
-  attributes <- parseTagStart "ul"
-  children <- many parseDOM
-  parseTagEnd "ul"
-  return $ Node (ULIST attributes) children
-
-parseListElemTag :: Parser DOM
-parseListElemTag = do
-  attributes <- parseTagStart "li"
-  children <- many parseDOM
-  parseTagEnd "li"
-  return $ Node (LISTELEM attributes) children
-
-parseTitleTag :: Parser DOM
-parseTitleTag = do
-  parseTagStart "title"
-  children <- many parseInlineDOM
-  parseTagEnd "title"
-  return $ Node TITLE children
-
-parseAnchorTag :: Parser DOM
-parseAnchorTag = do
-  attributes <- parseTagStart "a"
-  children <- many parseDOM
-  parseTagEnd "a"
-  return $ Node (ANCHOR attributes) children
-
-parsePTag :: Parser DOM
-parsePTag = do
-  attributes <- parseTagStart "p"
-  children <- many parseInlineDOM
-  parseTagEnd "p"
-  return $ Node (PARAGRAPH attributes) children
-
 parseText :: Parser DOM
 parseText = do
   text <- many $ Token.identifier textLexer
@@ -250,8 +205,6 @@ parseBlockDOM = try parseDivTag <|> try parseHTMLTag <|>
                 try parseTitleTag <|> try parseOListTag <|>
                 try parseUListTag <|> try parseListElemTag <|>
                 try parseNavTag <|> try parseAnchorTag
-
---parseInlineDOM :: Parser DOM
 
 parseDOM :: Parser DOM
 parseDOM =  try parseBlockDOM <|> try parseInlineDOM

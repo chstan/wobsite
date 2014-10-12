@@ -2,7 +2,8 @@ module Aux
        (pairFn,
         inferContentDescType,
         tailSafe,
-        oneAndMatches
+        oneAndMatches,
+        dummyParam
         ) where
 
 import System.FilePath (takeExtension)
@@ -32,3 +33,6 @@ oneAndMatches _ [] = False
 oneAndMatches p (x:_)
   | p == x = True
   | otherwise = False
+
+dummyParam :: a -> b -> a
+dummyParam f _ = f
