@@ -15,6 +15,7 @@ type NodeAttribute = [(String, String)]
 
 data HTMLNode = ROOT           NodeAttribute
               | DOCTYPE String
+
               | HTML           NodeAttribute
               | TITLE
               | ULIST          NodeAttribute
@@ -29,43 +30,32 @@ data HTMLNode = ROOT           NodeAttribute
               | HEADING Int    NodeAttribute
               | DIV            NodeAttribute
               | NAV            NodeAttribute
+              | ARTICLE        NodeAttribute
               | TEXT String
               | CUSTOM String  NodeAttribute
               | EMPTY
                 deriving (Show)
 
-uniformConsFromName :: String -> NodeAttribute -> HTMLNode
-uniformConsFromName "html" = HTML
-uniformConsFromName "ul" = ULIST
-uniformConsFromName "ol" = OLIST
-uniformConsFromName "li" = LISTELEM
-uniformConsFromName "head" = HEAD
-uniformConsFromName "body" = BODY
-uniformConsFromName "a" = ANCHOR
-uniformConsFromName "p" = PARAGRAPH
-uniformConsFromName "div" = DIV
-uniformConsFromName "nav" = NAV
-uniformConsFromName "title" = dummyParam TITLE
-
-parseUniformTag :: String -> Parser DOM
-parseUniformTag tag_label = do
+parseUniformTag :: String -> (NodeAttribute -> HTMLNode)
+                   -> Parser DOM
+parseUniformTag tag_label c = do
   attributes <- parseTagStart tag_label
   children <- many parseDOM
   parseTagEnd tag_label
-  return $ Node (uniformConsFromName tag_label
-                attributes) children
+  return $ Node (c attributes) children
 
-parseHTMLTag = parseUniformTag "html"
-parseUListTag = parseUniformTag "ul"
-parseOListTag = parseUniformTag "ol"
-parseListElemTag = parseUniformTag "li"
-parseHeadTag = parseUniformTag "head"
-parseBodyTag = parseUniformTag "body"
-parseAnchorTag = parseUniformTag "a"
-parsePTag = parseUniformTag "p"
-parseDivTag = parseUniformTag "div"
-parseNavTag = parseUniformTag "nav"
-parseTitleTag = parseUniformTag "title"
+parseHTMLTag = parseUniformTag "html" HTML
+parseUListTag = parseUniformTag "ul" ULIST
+parseOListTag = parseUniformTag "ol" OLIST
+parseListElemTag = parseUniformTag "li" LISTELEM
+parseHeadTag = parseUniformTag "head" HEAD
+parseBodyTag = parseUniformTag "body" BODY
+parseAnchorTag = parseUniformTag "a" ANCHOR
+parsePTag = parseUniformTag "p" PARAGRAPH
+parseDivTag = parseUniformTag "div" DIV
+parseNavTag = parseUniformTag "nav" NAV
+parseTitleTag = parseUniformTag "title" (dummyParam TITLE)
+parseArticleTag = parseUniformTag "article" ARTICLE
 
 attributeLexerStyle :: Token.LanguageDef ()
 attributeLexerStyle = Token.LanguageDef
