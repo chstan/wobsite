@@ -18,6 +18,8 @@ data HTMLNode = ROOT           NodeAttribute
 
               | HTML           NodeAttribute
               | TITLE
+              | BOLD           NodeAttribute
+              | ITALIC         NodeAttribute
               | ULIST          NodeAttribute
               | OLIST          NodeAttribute
               | LISTELEM       NodeAttribute
@@ -55,6 +57,8 @@ parsePTag = parseUniformTag "p" PARAGRAPH
 parseDivTag = parseUniformTag "div" DIV
 parseNavTag = parseUniformTag "nav" NAV
 parseTitleTag = parseUniformTag "title" (dummyParam TITLE)
+parseBoldTag = parseUniformTag "b" BOLD
+parseItalicTag = parseUniformTag "i" ITALIC
 parseArticleTag = parseUniformTag "article" ARTICLE
 
 attributeLexerStyle :: Token.LanguageDef ()
@@ -80,8 +84,8 @@ textLexerStyle = Token.LanguageDef
     Token.commentEnd = "",
     Token.commentLine = "",
     Token.nestedComments = False,
-    Token.identStart = alphaNum <|> oneOf "?=#-:,+_/\\.>",
-    Token.identLetter = alphaNum <|> oneOf " ?=#-:,+_/\\>.",
+    Token.identStart = alphaNum <|> oneOf " !?=#-':,+_/\\.>();&{}",
+    Token.identLetter = alphaNum <|> oneOf " !?=#-':,+_/\\>.();&{}",
     Token.opStart = oneOf "<",
     Token.opLetter = oneOf "</>",
     Token.reservedNames = [],
@@ -194,7 +198,9 @@ parseBlockDOM = try parseDivTag <|> try parseHTMLTag <|>
                 try parseDocType <|> try parseLinkTag <|>
                 try parseTitleTag <|> try parseOListTag <|>
                 try parseUListTag <|> try parseListElemTag <|>
-                try parseNavTag <|> try parseAnchorTag
+                try parseNavTag <|> try parseAnchorTag <|>
+                try parseArticleTag <|> try parseBoldTag <|>
+                try parseItalicTag
 
 parseDOM :: Parser DOM
 parseDOM =  try parseBlockDOM <|> try parseInlineDOM
