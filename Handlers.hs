@@ -5,7 +5,8 @@ module Handlers
         indexHandler,
         resumeHandler,
         echoHandler,
-        catHandler) where
+        catHandler,
+        templateTestHandler) where
 
 import Data.ByteString.Lazy.Char8 as BSL8
 import ResponseRequest
@@ -26,7 +27,7 @@ fileHandler s _ = do
   return $ Response "HTTP/1.1" 200 (inferContentDescType s) contents
 
 resourceHandler :: String -> RequestHandler
-resourceHandler s req = fileHandler ("res/" ++ s) req
+resourceHandler s = fileHandler ("res/" ++ s)
 
 indexHandler :: RequestHandler
 indexHandler = resourceHandler "index.html"
@@ -36,3 +37,9 @@ resumeHandler = resourceHandler "resume.html"
 
 catHandler :: RequestHandler
 catHandler = resourceHandler "cat.html"
+
+templateHandler :: String -> RequestHandler
+templateHandler f = fileHandler ("res/templates/" ++ f)
+
+templateTestHandler :: RequestHandler
+templateTestHandler = templateHandler "template.html"
