@@ -1,5 +1,11 @@
+{-# LANGUAGE TypeSynonymInstances #-}
 module DOM
-       () where
+       (DOM,
+        HTMLNode (..),
+        NodeAttribute,
+        showDOM,
+        doParseDOM,
+        ) where
 
 import Data.Tree
 import Data.Char (intToDigit)
@@ -13,30 +19,77 @@ type DOM = Tree HTMLNode
 
 type NodeAttribute = [(String, String)]
 
-data HTMLNode = ROOT           NodeAttribute
-              | DOCTYPE String
+data HTMLNode = DOCTYPE  { document_type :: String ,attributes :: NodeAttribute}
+              | HTML           { attributes :: NodeAttribute }
+              | TITLE          { attributes :: NodeAttribute }
+              | BOLD           { attributes :: NodeAttribute }
+              | ITALIC         { attributes :: NodeAttribute }
+              | ULIST          { attributes :: NodeAttribute }
+              | OLIST          { attributes :: NodeAttribute }
+              | LISTELEM       { attributes :: NodeAttribute }
+              | LINK           { attributes :: NodeAttribute }
+              | HEAD           { attributes :: NodeAttribute }
+              | BODY           { attributes :: NodeAttribute }
 
-              | HTML           NodeAttribute
-              | TITLE
-              | BOLD           NodeAttribute
-              | ITALIC         NodeAttribute
-              | ULIST          NodeAttribute
-              | OLIST          NodeAttribute
-              | LISTELEM       NodeAttribute
-              | LINK           NodeAttribute
-              | HEAD           NodeAttribute
-              | BODY           NodeAttribute
+              | ANCHOR         { attributes :: NodeAttribute }
+              | PARAGRAPH      { attributes :: NodeAttribute }
+              | HEADING        { n :: Int, attributes :: NodeAttribute }
+              | DIV            { attributes :: NodeAttribute }
+              | NAV            { attributes :: NodeAttribute }
+              | ARTICLE        { attributes :: NodeAttribute }
+              | TEXT           { content :: String, attributes :: NodeAttribute }
 
-              | ANCHOR         NodeAttribute
-              | PARAGRAPH      NodeAttribute
-              | HEADING Int    NodeAttribute
-              | DIV            NodeAttribute
-              | NAV            NodeAttribute
-              | ARTICLE        NodeAttribute
-              | TEXT String
-              | CUSTOM String  NodeAttribute
-              | EMPTY
-                deriving (Show)
+doParseDOM :: String -> Either ParseError DOM
+doParseDOM = (parse parseDOM "Parsing failed.")
+
+showDOM :: DOM -> String
+showDOM (Node t f) = (showOpeningTag t) ++ (concat $ map showDOM f) ++ (showClosingTag t)
+
+showNodeAttribute :: NodeAttribute -> String
+showNodeAttribute [] = ""
+showNodeAttribute ((t,v):xs) = " " ++ t ++ "=" ++ "\"" ++
+                               v ++ "\"" ++ showNodeAttribute xs
+
+showOpeningTag :: HTMLNode -> String
+showOpeningTag (DOCTYPE d _) = "<DOCTYPE " ++ d ++ ">"
+showOpeningTag (LINK attrs) = "<link" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (HTML attrs) = "<html" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (TITLE _) = "<title>"
+showOpeningTag (BOLD attrs) = "<b" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (ITALIC attrs) = "<i" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (ULIST attrs) = "<ul" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (OLIST attrs) = "<ol" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (LISTELEM attrs) = "<li" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (HEAD attrs) = "<head" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (BODY attrs) = "<body" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (ANCHOR attrs) = "<a" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (PARAGRAPH attrs) = "<p" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (HEADING n attrs) = "<h" ++ show n ++ " " ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (DIV attrs) = "<div" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (NAV attrs) = "<nav" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (ARTICLE attrs) = "<article" ++ showNodeAttribute attrs ++ ">"
+showOpeningTag (TEXT s _) = s
+
+showClosingTag :: HTMLNode -> String
+showClosingTag (DOCTYPE _ _) = ""
+showClosingTag (LINK _) = ""
+showClosingTag (HTML _) = "</html>"
+showClosingTag (TITLE _) = "</title>"
+showClosingTag (BOLD _) = "</b>"
+showClosingTag (ITALIC _) = "</i>"
+showClosingTag (ULIST _) = "</ul>"
+showClosingTag (OLIST _) = "</ol>"
+showClosingTag (LISTELEM _) = "</li>"
+showClosingTag (HEAD _) = "</head>"
+showClosingTag (BODY _) = "</body>"
+showClosingTag (ANCHOR _) = "</a>"
+showClosingTag (PARAGRAPH _) = "</p>"
+showClosingTag (HEADING n _) = "</h" ++ show n ++ ">"
+showClosingTag (DIV _) = "</div>"
+showClosingTag (NAV _) = "</nav>"
+showClosingTag (ARTICLE _) = "</article>"
+showClosingTag (TEXT _ _) = ""
+
 
 parseUniformTag :: String -> (NodeAttribute -> HTMLNode)
                    -> Parser DOM
@@ -56,7 +109,7 @@ parseAnchorTag = parseUniformTag "a" ANCHOR
 parsePTag = parseUniformTag "p" PARAGRAPH
 parseDivTag = parseUniformTag "div" DIV
 parseNavTag = parseUniformTag "nav" NAV
-parseTitleTag = parseUniformTag "title" (dummyParam TITLE)
+parseTitleTag = parseUniformTag "title" TITLE
 parseBoldTag = parseUniformTag "b" BOLD
 parseItalicTag = parseUniformTag "i" ITALIC
 parseArticleTag = parseUniformTag "article" ARTICLE
@@ -177,7 +230,7 @@ parseText = do
      True -> fail "No text encountered in parseText"
      False -> do
        children <- many parseInlineDOM
-       return $ Node (TEXT (foldl (++) [] text)) children
+       return $ Node (TEXT (foldl (++) [] text) []) children
 
 parseInlineDOM :: Parser DOM
 parseInlineDOM = try parseText
@@ -189,7 +242,7 @@ parseDocType = do
   doc_type <- Token.identifier attributeLexer
   char '>'
   children <- many parseDOM
-  return $ Node (DOCTYPE doc_type) children
+  return $ Node (DOCTYPE doc_type []) children
 
 parseBlockDOM :: Parser DOM
 parseBlockDOM = try parseDivTag <|> try parseHTMLTag <|>
