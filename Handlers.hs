@@ -7,22 +7,17 @@ module Handlers
         indexHandler,
         resumeHandler,
         echoHandler,
-        catHandler) where
+        catHandler,
+        contactHandler,
+        robotsHandler) where
 
 import Data.ByteString.Lazy.Char8 as BSL8
 
-import Data.Monoid (mempty)
-import Control.Monad (forM_)
-
-import Text.Blaze.Internal (preEscapedString)
-import Text.Blaze.Html5
-import qualified Text.Blaze.Html5 as H
-import qualified Text.Blaze.Html5.Attributes as A
 import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 
 import ResponseRequest
 import Aux                 (inferContentDescType)
-import Views.StaticViews   (indexView, resumeView, catView)
+import Views.StaticViews
 
 type RequestHandler = Request -> IO Response
 
@@ -45,6 +40,10 @@ indexHandler :: RequestHandler
 indexHandler _ = return $ Response "HTTP/1.1" 200 HTML $
                  HR.renderHtml $ indexView
 
+contactHandler :: RequestHandler
+contactHandler _ = return $ Response "HTTP/1.1" 200 HTML $
+                   HR.renderHtml $ contactView
+
 resumeHandler :: RequestHandler
 resumeHandler _ = return $ Response "HTTP/1.1" 200 HTML $
                 HR.renderHtml $ resumeView
@@ -52,3 +51,6 @@ resumeHandler _ = return $ Response "HTTP/1.1" 200 HTML $
 catHandler :: RequestHandler
 catHandler _ = return $ Response "HTTP/1.1" 200 HTML $
                HR.renderHtml $ catView
+
+robotsHandler :: RequestHandler
+robotsHandler = resourceHandler "robots.txt"

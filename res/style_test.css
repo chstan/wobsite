@@ -31,6 +31,14 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
     width: 120px;
 }
 
+.contact-container {
+    width: 350px;
+}
+
+.content-container {
+    margin-top: 70px;
+}
+
 .landing-content {
     position: absolute;
     left: 160px;

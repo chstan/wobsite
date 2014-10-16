@@ -3,15 +3,25 @@
 module Views.StaticViews
        (catView,
         resumeView,
-        indexView
+        indexView,
+        contactView
         ) where
 
 import Text.Blaze.Html5
+import Text.Blaze.Internal (preEscapedString)
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
 import Templates.Resume
-import Templates.Partial (standardPartial)
+import Templates.Partial (standardPartial, justified)
+
+contactContent :: Html
+contactContent = do
+  H.div ! A.class_ "content-container contact-container" $ do
+    justified (p "Email")
+              (p "chstan at {slac.}stanford.edu")
+    justified (p "Phone") (p $ preEscapedString
+                           "703 &nbsp;317 &nbsp;7012")
 
 indexContent :: Html
 indexContent = do
@@ -38,3 +48,6 @@ resumeContent = do
 
 resumeView :: Html
 resumeView = standardPartial resumeContent
+
+contactView :: Html
+contactView = standardPartial contactContent

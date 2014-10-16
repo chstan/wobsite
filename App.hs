@@ -23,6 +23,10 @@ applicationRoutes =
          , do match "resource"
               resourceLocation <- capture $ return . id
               return $ resourceHandler resourceLocation
+         , do match "contact"
+              return contactHandler
+         , do match "robots.txt"
+              return robotsHandler
          ]
 
 application :: Request -> IO Response
