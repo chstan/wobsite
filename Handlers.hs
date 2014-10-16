@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Handlers
        (RequestHandler,
         fourOhFourHandler,
@@ -5,12 +7,22 @@ module Handlers
         indexHandler,
         resumeHandler,
         echoHandler,
-        catHandler,
-        templateTestHandler) where
+        catHandler) where
 
 import Data.ByteString.Lazy.Char8 as BSL8
+
+import Data.Monoid (mempty)
+import Control.Monad (forM_)
+
+import Text.Blaze.Internal (preEscapedString)
+import Text.Blaze.Html5
+import qualified Text.Blaze.Html5 as H
+import qualified Text.Blaze.Html5.Attributes as A
+import qualified Text.Blaze.Html.Renderer.Utf8 as HR
+
 import ResponseRequest
 import Aux                 (inferContentDescType)
+import Views.StaticViews   (indexView, resumeView, catView)
 
 type RequestHandler = Request -> IO Response
 
@@ -30,16 +42,13 @@ resourceHandler :: String -> RequestHandler
 resourceHandler s = fileHandler ("res/" ++ s)
 
 indexHandler :: RequestHandler
-indexHandler = resourceHandler "index.html"
+indexHandler _ = return $ Response "HTTP/1.1" 200 HTML $
+                 HR.renderHtml $ indexView
 
 resumeHandler :: RequestHandler
-resumeHandler = resourceHandler "resume.html"
+resumeHandler _ = return $ Response "HTTP/1.1" 200 HTML $
+                HR.renderHtml $ resumeView
 
 catHandler :: RequestHandler
-catHandler = resourceHandler "cat.html"
-
-templateHandler :: String -> RequestHandler
-templateHandler f = fileHandler ("res/templates/" ++ f)
-
-templateTestHandler :: RequestHandler
-templateTestHandler = templateHandler "template.html"
+catHandler _ = return $ Response "HTTP/1.1" 200 HTML $
+               HR.renderHtml $ catView

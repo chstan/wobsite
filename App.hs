@@ -7,8 +7,8 @@ import Routes
 
 -- throw a random request at the router
 
-route1Free :: Route RequestHandler
-route1Free =
+applicationRoutes :: Route RequestHandler
+applicationRoutes =
   choice [ do matchNone
               return indexHandler
          , do match "resume"
@@ -28,7 +28,7 @@ route1Free =
 application :: Request -> IO Response
 application req = do
   let ProcessedPath p = path(req)
-  let h = runRoute route1Free p
+  let h = runRoute applicationRoutes p
   response <- case h of
                Nothing -> fourOhFourHandler req
                Just handler -> handler req
