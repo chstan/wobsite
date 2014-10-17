@@ -10,6 +10,7 @@ module Handlers
         echoHandler,
         catHandler,
         contactHandler,
+        booksHandler,
         robotsHandler) where
 
 import Data.ByteString.Lazy.Char8 as BSL8
@@ -65,3 +66,11 @@ projectIndexHandler req = do
    Left _ -> fourOhFourHandler req -- Meh, could be a better response.
    Right projects -> return $ Response "HTTP/1.1" 200 HTML $
                      HR.renderHtml $ projectIndexView projects
+
+booksHandler :: RequestHandler
+booksHandler req = do
+  dec <- eitherDecode <$> BSL8.readFile "res/books.json"
+  case dec of
+   Left _ -> fourOhFourHandler req
+   Right books -> return $ Response "HTTP/1.1" 200 HTML $
+                  HR.renderHtml $ booksView books

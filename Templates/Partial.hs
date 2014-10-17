@@ -4,17 +4,35 @@ module Templates.Partial
        (navPartial,
         standardPartial,
         renderProjectSynopsis,
+        renderBookRecord,
         justified,
         justifiedLeader) where
 
 import Data.Monoid                    (mempty)
 import Data.Text
 
+import Text.Blaze.Internal (preEscapedString)
 import Text.Blaze.Html5
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
 import Data.Project as Pr
+import Data.Book as Bk
+
+bookReadDate :: Bool -> Text -> Html
+bookReadDate False _ = p $ preEscapedString "&mdash;"
+bookReadDate _ date = p $ toHtml date
+
+renderBookRecord :: BookRecord -> Html
+renderBookRecord
+  BookRecord {Bk.title=b_title, Bk.author=b_author,
+              Bk.completion_date=b_date,
+              Bk.impression=b_imp, Bk.finished=b_finished} = do
+    H.div $ do
+      justified (cite $ toHtml b_title)
+                (bookReadDate b_finished b_date)
+      p $ toHtml b_author
+    H.div ! A.class_ "book-sep" $ mempty
 
 projectLink :: Text -> Text -> Html
 projectLink "#" t =

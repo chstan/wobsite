@@ -5,7 +5,8 @@ module Views.StaticViews
         resumeView,
         indexView,
         contactView,
-        projectIndexView
+        projectIndexView,
+        booksView
         ) where
 
 import Control.Monad (mapM_)
@@ -17,9 +18,19 @@ import qualified Text.Blaze.Html5.Attributes as A
 
 import Templates.Resume
 import Templates.Partial (standardPartial, justified,
-                          renderProjectSynopsis)
+                          renderProjectSynopsis,
+                          renderBookRecord)
 
 import Data.Project
+import Data.Book (BookRecord)
+
+booksContent :: [BookRecord] -> Html
+booksContent books = do
+  H.div ! A.class_ "books-content" $ do
+    H.div ! A.class_ "books-header" $ do
+      p $ "A record of books I've read lately, to come back to later."
+    H.div ! A.class_ "books-container" $ do
+      mapM_ renderBookRecord books
 
 projectIndexContent :: [ProjectSynopsis] -> Html
 projectIndexContent ps = do
@@ -65,3 +76,6 @@ contactView = standardPartial contactContent
 
 projectIndexView :: [ProjectSynopsis] -> Html
 projectIndexView ps = standardPartial $ projectIndexContent ps
+
+booksView :: [BookRecord] -> Html
+booksView bs = standardPartial $ booksContent bs

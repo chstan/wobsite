@@ -28,6 +28,9 @@ applicationRoutes =
          , do match "projects"
               matchNone
               return projectIndexHandler
+         , do match "books"
+              matchNone
+              return booksHandler
          , do match "robots.txt"
               return robotsHandler
          ]

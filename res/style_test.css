@@ -53,8 +53,26 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
     width: 500px;
 }
 
+.books-header {
+    height: 80px;
+}
+
 .projects-content {
     margin-top: 70px;
+}
+
+.books-content {
+    margin-top: 70px;
+    width: 500px;
+}
+
+.books-container > :last-child {
+    border: none;
+}
+
+.book-sep {
+    margin: 10px 0 20px 0;
+    border-bottom: 1px solid #eee;
 }
 
 .project-container {
