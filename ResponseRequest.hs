@@ -8,7 +8,8 @@ module ResponseRequest
                           PLAIN,
                           CSS,
                           PDF,
-                          JPEG)
+                          JPEG,
+                          PNG)
        , Response (Response)
        , rtype
        , path
@@ -28,7 +29,7 @@ data Request = Request { rtype :: RequestType,
                          path :: PathType,
                          options :: [(String, String)] } deriving (Show)
 
-data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG
+data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG | PNG
 instance Show ContentDescType where
   show c = case c of
     HTML -> "text/html"
@@ -36,6 +37,7 @@ instance Show ContentDescType where
     CSS -> "text/css"
     PDF -> "application/pdf"
     JPEG -> "image/jpeg"
+    PNG -> "image/png"
 
 data Response = Response { version :: String,
                            statuscode :: Int,

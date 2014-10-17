@@ -20,6 +20,7 @@ inferContentDescType loc = case takeExtension loc of
   ".css" -> CSS
   ".html" -> HTML
   ".pdf" -> PDF
+  ".png" -> PNG
   ".jpg" -> JPEG
   ".jpeg" -> JPEG -- REFACTOR INTO GUARD
   _ -> PLAIN
