@@ -3,6 +3,7 @@
 
 # Cabal
 dist/
+res/
 
 # Deployment files
 configuration
