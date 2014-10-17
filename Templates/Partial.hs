@@ -70,7 +70,8 @@ navPartial =
       li $ H.a ! A.href "/projects" $ "projects"
       li $ H.a ! A.href "http://github.com/chstan" $ "github"
       li $ H.a ! A.href "/contact" $ "contact"
-      li $ H.a ! A.href "#" $ "->"
+      li $ H.a ! A.href "#" $ "writing"
+      li $ H.a ! A.href "/books" $ "reading"
 
 standardPartial :: Html -> Html
 standardPartial content = docTypeHtml $ do
