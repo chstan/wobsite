@@ -4,8 +4,11 @@ module Views.StaticViews
        (catView,
         resumeView,
         indexView,
-        contactView
+        contactView,
+        projectIndexView
         ) where
+
+import Control.Monad (mapM_)
 
 import Text.Blaze.Html5
 import Text.Blaze.Internal (preEscapedString)
@@ -13,7 +16,15 @@ import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
 import Templates.Resume
-import Templates.Partial (standardPartial, justified)
+import Templates.Partial (standardPartial, justified,
+                          renderProjectSynopsis)
+
+import Data.Project
+
+projectIndexContent :: [ProjectSynopsis] -> Html
+projectIndexContent ps = do
+  H.div ! A.class_ "projects-content" $ do
+    mapM_ renderProjectSynopsis ps
 
 contactContent :: Html
 contactContent = do
@@ -51,3 +62,6 @@ resumeView = standardPartial resumeContent
 
 contactView :: Html
 contactView = standardPartial contactContent
+
+projectIndexView :: [ProjectSynopsis] -> Html
+projectIndexView ps = standardPartial $ projectIndexContent ps

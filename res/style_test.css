@@ -6,6 +6,11 @@ a, p {
     font-size: 14px;
 }
 
+h2 {
+    color: #444;
+    font-size: 21px;
+}
+
 a {
     text-decoration: none;
     color: #444;
@@ -29,6 +34,35 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
     margin-left: 10px;
     margin-right: 10px;
     width: 120px;
+}
+
+.project-image {
+    width: 140px;
+    height: 140px;
+    border-radius: 70px;
+    -webkit-border-radius: 70px;
+    -moz-border-radius: 70px;
+    display: inline-block;
+    margin-right: 20px;
+    margin-top: 12px;
+}
+
+.project-content {
+    display: inline-block;
+    vertical-align: top;
+    width: 500px;
+}
+
+.projects-content {
+    margin-top: 70px;
+}
+
+.project-container {
+    margin-bottom: 60px;
+}
+
+.project-description {
+    margin-top: 5px;
 }
 
 .contact-container {

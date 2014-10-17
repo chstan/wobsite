@@ -25,6 +25,9 @@ applicationRoutes =
               return $ resourceHandler resourceLocation
          , do match "contact"
               return contactHandler
+         , do match "projects"
+              matchNone
+              return projectIndexHandler
          , do match "robots.txt"
               return robotsHandler
          ]

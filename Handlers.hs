@@ -2,6 +2,7 @@
 
 module Handlers
        (RequestHandler,
+        projectIndexHandler,
         fourOhFourHandler,
         resourceHandler,
         indexHandler,
@@ -12,6 +13,8 @@ module Handlers
         robotsHandler) where
 
 import Data.ByteString.Lazy.Char8 as BSL8
+import Data.Aeson          (eitherDecode)
+import Control.Applicative ((<$>))
 
 import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 
@@ -54,3 +57,11 @@ catHandler _ = return $ Response "HTTP/1.1" 200 HTML $
 
 robotsHandler :: RequestHandler
 robotsHandler = resourceHandler "robots.txt"
+
+projectIndexHandler :: RequestHandler
+projectIndexHandler req = do
+  dec <- eitherDecode <$> BSL8.readFile "res/project_descriptions.json"
+  case dec of
+   Left _ -> fourOhFourHandler req -- Meh, could be a better response.
+   Right projects -> return $ Response "HTTP/1.1" 200 HTML $
+                     HR.renderHtml $ projectIndexView projects

@@ -3,12 +3,44 @@
 module Templates.Partial
        (navPartial,
         standardPartial,
+        renderProjectSynopsis,
         justified,
         justifiedLeader) where
+
+import Data.Monoid                    (mempty)
+import Data.Text
 
 import Text.Blaze.Html5
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
+
+import Data.Project as Pr
+
+projectLink :: Text -> Text -> Html
+projectLink "#" t =
+  h2 $ toHtml t
+projectLink l t =
+  a ! A.href (H.toValue (Data.Text.concat ["/projects/", l]))
+    $ h2 $ toHtml t
+
+
+projectImageStyle :: Text -> Text
+projectImageStyle img_url =
+  Data.Text.concat ["background: url(/resource/", img_url,
+                    ") no-repeat center 0;",
+                    "background-size: cover"]
+
+renderProjectSynopsis :: ProjectSynopsis -> Html
+renderProjectSynopsis
+  ProjectSynopsis {Pr.title=t, Pr.label=l,
+                   picture_file=pf, description=d} =
+    H.div ! A.class_ "project-container" $ do
+      H.div ! A.class_ "project-image" !
+        A.style (H.toValue $ projectImageStyle pf) $ mempty
+      H.div ! A.class_ "project-content" $ do
+        projectLink l t
+        p ! A.class_ "project-description" $ toHtml d
+
 
 navPartial :: Html
 navPartial =
