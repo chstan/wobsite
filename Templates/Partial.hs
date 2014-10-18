@@ -29,9 +29,9 @@ renderBookRecord
               Bk.completion_date=b_date,
               Bk.impression=b_imp, Bk.finished=b_finished} = do
     H.div $ do
-      justified (cite $ toHtml b_title)
+      cite $ toHtml b_title
+      justified (p $ toHtml b_author)
                 (bookReadDate b_finished b_date)
-      p $ toHtml b_author
     H.div ! A.class_ "book-sep" $ mempty
 
 projectLink :: Text -> Text -> Html
