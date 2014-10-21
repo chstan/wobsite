@@ -6,6 +6,7 @@ module Templates.Partial
         renderProjectSynopsis,
         renderBookRecord,
         justified,
+        googleAnalyticsHook,
         justifiedLeader) where
 
 import Data.Monoid                    (mempty)
@@ -40,7 +41,6 @@ projectLink "#" t =
 projectLink l t =
   a ! A.href (H.toValue (Data.Text.concat ["/projects/", l]))
     $ h2 $ toHtml t
-
 
 projectImageStyle :: Text -> Text
 projectImageStyle img_url =
@@ -83,6 +83,7 @@ standardPartial content = docTypeHtml $ do
          ! A.rel "stylesheet" ! A.type_ "test/css"
     link ! A.href "/resource/style_test.css"
          ! A.rel "stylesheet" ! A.type_ "text/css"
+    googleAnalyticsHook
   H.body $ do
     H.div ! A.class_ "container" $ do
       H.div ! A.class_ "container2" $ do
@@ -101,3 +102,13 @@ justifiedLeader l r = do
   H.div ! A.class_ "just-container content-leader" $ do
     H.div ! A.class_ "just-left-container" $ l
     H.div ! A.class_ "just-right-container" $ r
+
+googleAnalyticsHook :: Html
+googleAnalyticsHook =
+  H.script $
+  "(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){\
+  \(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),\
+  \m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)\
+  \})(window,document,'script','//www.google-analytics.com/analytics.js','ga');\
+  \ga('create', 'UA-55955707-1', 'auto');\
+  \ga('send', 'pageview');"
