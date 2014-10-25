@@ -49,7 +49,7 @@ indexContent :: Html
 indexContent =
   H.div ! A.id "content-header" $ do
     H.div ! A.id "statement" $ do
-      p "I'm Conrad Stansbury."
+      p "Hi, I'm Conrad."
       p "I currently attend Stanford University where I major in physics."
       p "To see some of what I've been work on, take a look around or\
         \ head over to my GitHub. Alternatively if you want to get in\
