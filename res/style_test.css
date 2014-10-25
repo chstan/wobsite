@@ -102,6 +102,15 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 400;
 }
 
+#statement {
+    padding-top: 70px;
+    width: 500px;
+}
+
+#statement p {
+    margin-bottom: 10px;
+}
+
 #resume-link {
     padding-top: 70px;
 }

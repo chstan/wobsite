@@ -46,9 +46,16 @@ contactContent = do
                            "703 &nbsp;317 &nbsp;7012")
 
 indexContent :: Html
-indexContent = do
-  h3 "This is a heading."
-  p "This is a paragraph."
+indexContent =
+  H.div ! A.id "content-header" $ do
+    H.div ! A.id "statement" $ do
+      p "I'm Conrad Stansbury."
+      p "I currently attend Stanford University where I major in physics."
+      p "To see some of what I've been work on, take a look around or\
+        \ head over to my GitHub. Alternatively if you want to get in\
+        \ touch, send me an email and I'll get back to you quickly."
+      p "Thanks for visiting."
+
 
 indexView :: Html
 indexView = standardPartial indexContent
