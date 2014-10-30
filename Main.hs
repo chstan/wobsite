@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 import qualified Data.ByteString.Lazy.Char8 as BSL8
 
+import Control.Monad (liftM)
+
+import qualified Data.Map as Map
 import Network hiding (accept)
 import Network.Socket
 import Network.Socket.ByteString.Lazy as NSBL (getContents, sendAll)
@@ -10,7 +13,8 @@ import App
 import Middleware
 
 appWithMiddleware :: Request -> IO Response
-appWithMiddleware = (application . breakPath)
+appWithMiddleware req =
+  ((liftM $ compressResponse req) . application . breakPath) req
 
 respond :: Request -> Socket -> IO ()
 respond req c  = do
@@ -34,8 +38,8 @@ parseOptionsHelper (f:xs) acc
   value = unwords . tail . words $ BSL8.unpack f
   builtOption = (option, value)
 
-parseOptions :: [BSL8.ByteString] -> [(String, String)]
-parseOptions l = parseOptionsHelper l []
+parseOptions :: [BSL8.ByteString] -> Map.Map String String
+parseOptions l = Map.fromList $ parseOptionsHelper l []
 
 parseRequest :: [BSL8.ByteString] -> Request
 parseRequest l = case (BSL8.words (head l)) of

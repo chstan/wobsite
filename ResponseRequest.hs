@@ -10,15 +10,19 @@ module ResponseRequest
                           PDF,
                           JPEG,
                           PNG)
+       , EncodingType (UNZIP,
+                       GZIP)
        , Response (Response)
        , rtype
        , path
        , options
        , version
        , statuscode
+       , encoding
        , contentDescription
        , body) where
 
+import qualified Data.Map as Map
 import Data.ByteString.Lazy.Char8 as BSL8
 
 data PathType = RawPath { raw :: String }
@@ -27,7 +31,13 @@ data PathType = RawPath { raw :: String }
 data RequestType = GET | POST | PUT | DELETE deriving (Show)
 data Request = Request { rtype :: RequestType,
                          path :: PathType,
-                         options :: [(String, String)] } deriving (Show)
+                         options :: Map.Map String String } deriving (Show)
+
+data EncodingType = UNZIP | GZIP
+instance Show EncodingType where
+  show t = case t of
+    UNZIP -> "identity"
+    GZIP -> "gzip"
 
 data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG | PNG
 instance Show ContentDescType where
@@ -41,6 +51,7 @@ instance Show ContentDescType where
 
 data Response = Response { version :: String,
                            statuscode :: Int,
+                           encoding :: EncodingType,
                            contentDescription :: ContentDescType,
                            body :: ByteString }
 
@@ -52,4 +63,5 @@ instance Show Response where
     404 -> "Not Found") ++ "\r\n" ++
               "Content-Type: " ++ show(contentDescription(resp)) ++ "\r\n" ++
               "Content-Length: " ++ show(BSL8.length $ body resp) ++ "\r\n" ++
+              "Content-Encoding: " ++ show (encoding resp) ++ "\r\n" ++
               "\r\n" ++ (unpack $ body resp) ++ "\r\n"

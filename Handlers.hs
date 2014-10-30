@@ -33,34 +33,34 @@ import Data.BlogEntry (lookupBlogEntry, markdown_location)
 type RequestHandler = Request -> IO Response
 
 echoHandler :: RequestHandler
-echoHandler req = return $ Response "HTTP/1.1" 200 PLAIN (pack $ show req)
+echoHandler req = return $ Response "HTTP/1.1" 200 UNZIP PLAIN (pack $ show req)
 
 fourOhFourHandler :: RequestHandler
-fourOhFourHandler _ = return $ Response "HTTP/1.1" 404
+fourOhFourHandler _ = return $ Response "HTTP/1.1" 404 UNZIP
                       PLAIN (pack $ "Oh man! 404...")
 
 fileHandler :: String -> RequestHandler
 fileHandler s _ = do
   contents <- BSL8.readFile s
-  return $ Response "HTTP/1.1" 200 (inferContentDescType s) contents
+  return $ Response "HTTP/1.1" 200 UNZIP (inferContentDescType s) contents
 
 resourceHandler :: String -> RequestHandler
 resourceHandler s = fileHandler ("res/" ++ s)
 
 indexHandler :: RequestHandler
-indexHandler _ = return $ Response "HTTP/1.1" 200 HTML $
+indexHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML $
                  HR.renderHtml $ indexView
 
 contactHandler :: RequestHandler
-contactHandler _ = return $ Response "HTTP/1.1" 200 HTML $
+contactHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML $
                    HR.renderHtml $ contactView
 
 resumeHandler :: RequestHandler
-resumeHandler _ = return $ Response "HTTP/1.1" 200 HTML $
+resumeHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML $
                 HR.renderHtml $ resumeView
 
 catHandler :: RequestHandler
-catHandler _ = return $ Response "HTTP/1.1" 200 HTML $
+catHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML $
                HR.renderHtml $ catView
 
 robotsHandler :: RequestHandler
@@ -71,7 +71,7 @@ projectIndexHandler req = do
   dec <- eitherDecode <$> BSL8.readFile "res/project_descriptions.json"
   case dec of
    Left _ -> fourOhFourHandler req -- Meh, could be a better response.
-   Right projects -> return $ Response "HTTP/1.1" 200 HTML $
+   Right projects -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
                      HR.renderHtml $ projectIndexView projects
 
 booksHandler :: RequestHandler
@@ -79,7 +79,7 @@ booksHandler req = do
   dec <- eitherDecode <$> BSL8.readFile "res/books.json"
   case dec of
    Left _ -> fourOhFourHandler req
-   Right books -> return $ Response "HTTP/1.1" 200 HTML $
+   Right books -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
                   HR.renderHtml $ booksView books
 
 blogIndexHandler :: RequestHandler
@@ -87,7 +87,7 @@ blogIndexHandler req = do
   dec <- eitherDecode <$> BSL8.readFile "res/blog_entries.json"
   case dec of
    Left _ -> fourOhFourHandler req
-   Right entries -> return $ Response "HTTP/1.1" 200 HTML $
+   Right entries -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
                     HR.renderHtml $ blogIndexView entries
 
 blogEntryHandler :: String -> RequestHandler
@@ -97,6 +97,6 @@ blogEntryHandler entryName req = do
     Nothing -> fourOhFourHandler req
     Just listing -> do
       content <- TLIO.readFile ("res/" ++ (T.unpack m_location))
-      return $ Response "HTTP/1.1" 200 HTML $
+      return $ Response "HTTP/1.1" 200 UNZIP HTML $
         HR.renderHtml $ blogEntryView listing content
        where m_location = markdown_location listing
