@@ -11,8 +11,12 @@ module Handlers
         catHandler,
         contactHandler,
         booksHandler,
+        blogIndexHandler,
+        blogEntryHandler,
         robotsHandler) where
 
+import qualified Data.Text as T
+import qualified Data.Text.Lazy.IO as TLIO
 import Data.ByteString.Lazy.Char8 as BSL8
 import Data.Aeson          (eitherDecode)
 import Control.Applicative ((<$>))
@@ -22,6 +26,9 @@ import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 import ResponseRequest
 import Aux                 (inferContentDescType)
 import Views.StaticViews
+import Views.BlogEntry
+
+import Data.BlogEntry (lookupBlogEntry, markdown_location)
 
 type RequestHandler = Request -> IO Response
 
@@ -74,3 +81,22 @@ booksHandler req = do
    Left _ -> fourOhFourHandler req
    Right books -> return $ Response "HTTP/1.1" 200 HTML $
                   HR.renderHtml $ booksView books
+
+blogIndexHandler :: RequestHandler
+blogIndexHandler req = do
+  dec <- eitherDecode <$> BSL8.readFile "res/blog_entries.json"
+  case dec of
+   Left _ -> fourOhFourHandler req
+   Right entries -> return $ Response "HTTP/1.1" 200 HTML $
+                    HR.renderHtml $ blogIndexView entries
+
+blogEntryHandler :: String -> RequestHandler
+blogEntryHandler entryName req = do
+  dec <- eitherDecode <$> BSL8.readFile "res/blog_entries.json"
+  case (lookupBlogEntry entryName dec) of
+    Nothing -> fourOhFourHandler req
+    Just listing -> do
+      content <- TLIO.readFile ("res/" ++ (T.unpack m_location))
+      return $ Response "HTTP/1.1" 200 HTML $
+        HR.renderHtml $ blogEntryView listing content
+       where m_location = markdown_location listing

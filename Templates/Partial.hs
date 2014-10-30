@@ -4,6 +4,7 @@ module Templates.Partial
        (navPartial,
         standardPartial,
         renderProjectSynopsis,
+        renderBlogListing,
         renderBookRecord,
         justified,
         googleAnalyticsHook,
@@ -19,6 +20,7 @@ import qualified Text.Blaze.Html5.Attributes as A
 
 import Data.Project as Pr
 import Data.Book as Bk
+import Data.BlogEntry as Bg
 
 bookReadDate :: Bool -> Text -> Html
 bookReadDate False _ = p $ preEscapedString "&mdash;"
@@ -34,6 +36,22 @@ renderBookRecord
       justified (p $ toHtml b_author)
                 (bookReadDate b_finished b_date)
     H.div ! A.class_ "book-sep" $ mempty
+
+blogLink :: Text -> Text -> Html
+blogLink "#" t =
+  h2 $ toHtml t
+blogLink l t =
+  a ! A.href (H.toValue (Data.Text.concat ["/writing/", l]))
+    $ h2 $ toHtml t
+
+renderBlogListing :: BlogListing -> Html
+renderBlogListing
+  BlogListing {Bg.title = t, Bg.label = l,
+               Bg.picture_file = pf, Bg.description = d} =
+    H.div ! A.class_ "project-container" $ do
+      H.div ! A.class_ "project-content" $ do
+        blogLink l t
+        p ! A.class_ "project-description" $ toHtml d
 
 projectLink :: Text -> Text -> Html
 projectLink "#" t =
@@ -51,7 +69,7 @@ projectImageStyle img_url =
 renderProjectSynopsis :: ProjectSynopsis -> Html
 renderProjectSynopsis
   ProjectSynopsis {Pr.title=t, Pr.label=l,
-                   picture_file=pf, description=d} =
+                   Pr.picture_file=pf, Pr.description=d} =
     H.div ! A.class_ "project-container" $ do
       H.div ! A.class_ "project-image" !
         A.style (H.toValue $ projectImageStyle pf) $ mempty
@@ -70,7 +88,7 @@ navPartial =
       li $ H.a ! A.href "/projects" $ "projects"
       li $ H.a ! A.href "http://github.com/chstan" $ "github"
       li $ H.a ! A.href "/contact" $ "contact"
-      li $ H.a ! A.href "#" $ "writing"
+      li $ H.a ! A.href "/writing" $ "writing"
       li $ H.a ! A.href "/books" $ "reading"
 
 standardPartial :: Html -> Html

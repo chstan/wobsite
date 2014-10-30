@@ -31,6 +31,13 @@ applicationRoutes =
          , do match "books"
               matchNone
               return booksHandler
+         , do match "writing"
+              matchNone
+              return blogIndexHandler
+         , do match "writing"
+              entryName <- capture $ return . id
+              matchNone
+              return $ blogEntryHandler entryName
          , do match "robots.txt"
               return robotsHandler
          ]
