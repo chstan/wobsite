@@ -19,7 +19,8 @@ executable WebServer
   main-is:             Main.hs
   -- other-modules:       
   -- other-extensions:    
-  build-depends:       aeson >= 0.8.0.0
+  build-depends:       TCache >= 0.10.1.0
+                     , aeson >= 0.8.0.0
                      , base >=4.6
                      , blaze-html >= 0.7.0.3
                      , blaze-markup >= 0.6.1.1

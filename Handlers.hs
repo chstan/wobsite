@@ -18,9 +18,12 @@ module Handlers
 
 import qualified Data.Text as T
 import qualified Data.Text.Lazy.IO as TLIO
+import Data.Text.Lazy.Encoding
 import Data.ByteString.Lazy.Char8 as BSL8
 import Data.Aeson          (eitherDecode)
 import Control.Applicative ((<$>))
+
+import Data.TCache.Memoization (cachedByKey)
 
 import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 
@@ -33,6 +36,9 @@ import Data.BlogEntry (lookupBlogEntry, markdown_location)
 
 type RequestHandler = Request -> IO Response
 
+cachedReadFile :: String -> IO ByteString
+cachedReadFile s = cachedByKey s 0 $ BSL8.readFile s
+
 echoHandler :: RequestHandler
 echoHandler req = return $ Response "HTTP/1.1" 200 UNZIP PLAIN (pack $ show req)
 
@@ -42,7 +48,7 @@ fourOhFourHandler _ = return $ Response "HTTP/1.1" 404 UNZIP
 
 fileHandler :: String -> RequestHandler
 fileHandler s _ = do
-  contents <- BSL8.readFile s
+  contents <- cachedReadFile s
   return $ Response "HTTP/1.1" 200 UNZIP (inferContentDescType s) contents
 
 resourceHandler :: String -> RequestHandler
@@ -69,7 +75,7 @@ robotsHandler = resourceHandler "robots.txt"
 
 projectIndexHandler :: RequestHandler
 projectIndexHandler req = do
-  dec <- eitherDecode <$> BSL8.readFile "res/project_descriptions.json"
+  dec <- eitherDecode <$> cachedReadFile "res/project_descriptions.json"
   case dec of
    Left _ -> fourOhFourHandler req -- Meh, could be a better response.
    Right projects -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
@@ -77,7 +83,7 @@ projectIndexHandler req = do
 
 booksHandler :: RequestHandler
 booksHandler req = do
-  dec <- eitherDecode <$> BSL8.readFile "res/books.json"
+  dec <- eitherDecode <$> cachedReadFile "res/books.json"
   case dec of
    Left _ -> fourOhFourHandler req
    Right books -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
@@ -85,11 +91,11 @@ booksHandler req = do
 
 staticPageHandler :: String -> RequestHandler
 staticPageHandler entryName req = do
-  dec <- eitherDecode <$> BSL8.readFile "res/pages.json"
+  dec <- eitherDecode <$> cachedReadFile "res/pages.json"
   case (lookupBlogEntry entryName dec) of
     Nothing -> fourOhFourHandler req
     Just listing -> do
-      content <- TLIO.readFile ("res/" ++ (T.unpack m_location))
+      content <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack m_location))
       return $ Response "HTTP/1.1" 200 UNZIP HTML $
         HR.renderHtml $ blogEntryView listing content
        where m_location = markdown_location listing
@@ -97,7 +103,7 @@ staticPageHandler entryName req = do
 
 blogIndexHandler :: RequestHandler
 blogIndexHandler req = do
-  dec <- eitherDecode <$> BSL8.readFile "res/blog_entries.json"
+  dec <- eitherDecode <$> cachedReadFile "res/blog_entries.json"
   case dec of
    Left _ -> fourOhFourHandler req
    Right entries -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
@@ -105,11 +111,11 @@ blogIndexHandler req = do
 
 blogEntryHandler :: String -> RequestHandler
 blogEntryHandler entryName req = do
-  dec <- eitherDecode <$> BSL8.readFile "res/blog_entries.json"
+  dec <- eitherDecode <$> cachedReadFile "res/blog_entries.json"
   case (lookupBlogEntry entryName dec) of
     Nothing -> fourOhFourHandler req
     Just listing -> do
-      content <- TLIO.readFile ("res/" ++ (T.unpack m_location))
+      content <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack m_location))
       return $ Response "HTTP/1.1" 200 UNZIP HTML $
         HR.renderHtml $ blogEntryView listing content
        where m_location = markdown_location listing
