@@ -56,9 +56,11 @@ renderBlogListing
 projectLink :: Text -> Text -> Html
 projectLink "#" t =
   h2 $ toHtml t
-projectLink l t =
-  a ! A.href (H.toValue (Data.Text.concat ["/static/", l]))
-    $ h2 $ toHtml t
+projectLink l t
+  | Data.Text.head l == '/' = a ! A.href (H.toValue l)
+                              $ h2 $ toHtml t
+  | otherwise = a ! A.href (H.toValue (Data.Text.concat ["/static/", l]))
+                $ h2 $ toHtml t
 
 projectImageStyle :: Text -> Text
 projectImageStyle img_url =
