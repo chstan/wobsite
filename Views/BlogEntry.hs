@@ -21,5 +21,9 @@ blogEntryView _ content = standardPartial $ do
   H.script ! A.src "//cdnjs.cloudflare.com/ajax/libs/\
                    \highlight.js/8.3/highlight.min.js" $ mempty
   H.script $ "hljs.initHighlightingOnLoad();"
+  H.script ! A.type_ "text/javascript"
+           ! A.src "http://cdn.mathjax.org/mathjax/latest/\
+                   \MathJax.js?config=TeX-AMS-MML_HTMLorMML" $ mempty
   H.div ! A.class_ "projects-content" $ do
-    markdown def content
+    H.div ! A.class_ "from-markdown" $ do
+      markdown def content

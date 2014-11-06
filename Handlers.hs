@@ -13,6 +13,7 @@ module Handlers
         booksHandler,
         blogIndexHandler,
         blogEntryHandler,
+        staticPageHandler,
         robotsHandler) where
 
 import qualified Data.Text as T
@@ -81,6 +82,18 @@ booksHandler req = do
    Left _ -> fourOhFourHandler req
    Right books -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
                   HR.renderHtml $ booksView books
+
+staticPageHandler :: String -> RequestHandler
+staticPageHandler entryName req = do
+  dec <- eitherDecode <$> BSL8.readFile "res/pages.json"
+  case (lookupBlogEntry entryName dec) of
+    Nothing -> fourOhFourHandler req
+    Just listing -> do
+      content <- TLIO.readFile ("res/" ++ (T.unpack m_location))
+      return $ Response "HTTP/1.1" 200 UNZIP HTML $
+        HR.renderHtml $ blogEntryView listing content
+       where m_location = markdown_location listing
+
 
 blogIndexHandler :: RequestHandler
 blogIndexHandler req = do

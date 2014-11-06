@@ -38,6 +38,10 @@ applicationRoutes =
               entryName <- capture $ return . id
               matchNone
               return $ blogEntryHandler entryName
+         , do match "static"
+              entryName <- capture $ return . id
+              matchNone
+              return $ staticPageHandler entryName
          , do match "robots.txt"
               return robotsHandler
          ]

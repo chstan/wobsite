@@ -57,7 +57,7 @@ projectLink :: Text -> Text -> Html
 projectLink "#" t =
   h2 $ toHtml t
 projectLink l t =
-  a ! A.href (H.toValue (Data.Text.concat ["/projects/", l]))
+  a ! A.href (H.toValue (Data.Text.concat ["/static/", l]))
     $ h2 $ toHtml t
 
 projectImageStyle :: Text -> Text

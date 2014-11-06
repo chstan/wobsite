@@ -12,9 +12,15 @@ h2 {
 }
 
 a {
+    text-decoration: underline;
+    font-weight: 400;
+    color: #000;
+}
+
+nav a {
     text-decoration: none;
     color: #444;
-    font-weight: 400;
+
 }
 
 .container {
@@ -55,6 +61,43 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
 
 .books-header {
     height: 80px;
+}
+
+.from-markdown {
+    width: 550px;
+}
+
+.from-markdown h1 {
+    font-size: 24px;
+}
+
+.from-markdown h2 {
+    font-size: 20px;
+}
+
+.from-markdown h3 {
+    font-size: 18px;
+}
+
+.from-markdown h1,
+.from-markdown h2,
+.from-markdown h3,
+.from-markdown h4,
+.from-markdown h5,
+.from-markdown h6 {
+    margin-bottom: 12px;
+    margin-top: 20px;
+    color: #000;
+}
+
+.from-markdown a {
+    text-decoration: underline;
+}
+
+.from-markdown p {
+    line-height: 1.6;
+    margin-bottom: 12px;
+    text-indent: 28px;
 }
 
 .projects-content {
