@@ -59,7 +59,7 @@ indexContent =
     H.div ! A.id "statement" $ do
       p "Hi, I'm Conrad."
       p "I currently attend Stanford University where I major in physics."
-      p "To see some of what I've been work on, take a look around or\
+      p "To see some of what I've been working on, take a look around or\
         \ head over to my GitHub. Alternatively if you want to get in\
         \ touch, send me an email and I'll get back to you quickly."
       p "Thanks for visiting."
