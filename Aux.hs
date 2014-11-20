@@ -23,6 +23,7 @@ inferContentDescType loc = case takeExtension loc of
   ".png" -> PNG
   ".jpg" -> JPEG
   ".jpeg" -> JPEG -- REFACTOR INTO GUARD
+  ".tar" -> TAR
   _ -> PLAIN
 
 tailSafe :: [a] -> [a]

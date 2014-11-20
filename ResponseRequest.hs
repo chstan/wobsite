@@ -9,7 +9,8 @@ module ResponseRequest
                           CSS,
                           PDF,
                           JPEG,
-                          PNG)
+                          PNG,
+                          TAR)
        , EncodingType (UNZIP,
                        GZIP)
        , Response (Response)
@@ -39,7 +40,7 @@ instance Show EncodingType where
     UNZIP -> "identity"
     GZIP -> "gzip"
 
-data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG | PNG
+data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG | PNG | TAR
 instance Show ContentDescType where
   show c = case c of
     HTML -> "text/html"
@@ -48,6 +49,7 @@ instance Show ContentDescType where
     PDF -> "application/pdf"
     JPEG -> "image/jpeg"
     PNG -> "image/png"
+    TAR -> "application/x-tar"
 
 data Response = Response { version :: String,
                            statuscode :: Int,
