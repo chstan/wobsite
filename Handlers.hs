@@ -5,6 +5,7 @@ module Handlers
         projectIndexHandler,
         fourOhFourHandler,
         resourceHandler,
+        tmpResourceHandler,
         indexHandler,
         resumeHandler,
         echoHandler,
@@ -16,6 +17,7 @@ module Handlers
         staticPageHandler,
         robotsHandler) where
 
+import Data.List (intercalate)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy.IO as TLIO
 import Data.Text.Lazy.Encoding
@@ -50,6 +52,12 @@ fileHandler :: String -> RequestHandler
 fileHandler s _ = do
   contents <- cachedReadFile s
   return $ Response "HTTP/1.1" 200 UNZIP (inferContentDescType s) contents
+
+tmpResourceHandler :: RequestHandler
+tmpResourceHandler req =
+  resourceHandler resource req
+  where resource = Data.List.intercalate "/" (Prelude.tail fragments)
+        ProcessedPath fragments = path(req)
 
 resourceHandler :: String -> RequestHandler
 resourceHandler s = fileHandler ("res/" ++ s)

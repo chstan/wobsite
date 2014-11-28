@@ -21,6 +21,8 @@ applicationRoutes =
               match "cat"
               return catHandler
          , do match "resource"
+              return $ tmpResourceHandler -- please forgive me
+         , do match "resource"
               resourceLocation <- capture $ return . id
               return $ resourceHandler resourceLocation
          , do match "contact"
