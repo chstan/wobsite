@@ -68,7 +68,7 @@ resumeInserts =
 
     resumeSection (h4 $ "Projects") $ do
       justifiedLeader (p $ b $ "Chess Engine") mempty
-      resumeParagraphs  "Designed and buit a chess engine in C as a way of \
+      resumeParagraphs  "Designed and built a chess engine in C as a way of \
                         \exploring my hobby for chess and understanding how \
                         \systems level languages can be leveraged to build \
                         \complex applications."
