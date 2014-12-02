@@ -19,10 +19,10 @@ module Data.Chess
 import Data.Char (isSpace)
 import Data.List (stripPrefix)
 import Control.Monad (when)
-import System.IO (Handle, hPutStrLn)
+import System.IO (Handle, hPutStrLn, hFlush, hClose, hGetContents)
 import qualified Data.Map as Map
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar)
-import System.Process (ProcessHandle)
+import System.Process (ProcessHandle, waitForProcess)
 import Data.Time (UTCTime, getCurrentTime)
 import Data.Maybe (fromJust, catMaybes, listToMaybe)
 
@@ -59,6 +59,11 @@ killEngine h = do
   -- kill according to UCI specification
   hPutStrLn (engineStdIn h) "stop"
   hPutStrLn (engineStdIn h) "quit"
+  hFlush (engineStdIn h)
+  hClose (engineStdIn h)
+  hClose (engineStdOut h)
+  waitForProcess (engineProcess h)
+  return ()
 
 checkOnEngineByUUID :: TVar (Map.Map String ChessEngineHandle) -> String -> IO Bool
 checkOnEngineByUUID stmHandles uuidString = do
@@ -74,7 +79,7 @@ checkOnEngineByUUID stmHandles uuidString = do
        when (now > expirationDate h) $
          writeTVar stmHandles $ Map.delete uuidString handlesMap
        return (now > expirationDate h, mHandle)
-     Nothing -> return (False, mHandle)
+     Nothing -> return (False, Nothing)
 
   when shouldKill $
     killEngine $ fromJust mh
