@@ -92,6 +92,7 @@ navPartial =
       li $ H.a ! A.href "/contact" $ "contact"
       li $ H.a ! A.href "/writing" $ "writing"
       li $ H.a ! A.href "/books" $ "reading"
+      li $ H.a ! A.href "/chess" $ "chess"
 
 standardPartial :: Html -> Html
 standardPartial content = docTypeHtml $ do

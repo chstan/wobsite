@@ -5,11 +5,14 @@ module Views.StaticViews
         resumeView,
         indexView,
         contactView,
+        chessView,
         projectIndexView,
         booksView,
         blogIndexView
         ) where
 
+import Data.UUID (UUID)
+import Data.Monoid (mempty)
 import Control.Monad (mapM_)
 
 import Text.Blaze.Html5
@@ -67,6 +70,23 @@ indexContent =
 
 indexView :: Html
 indexView = standardPartial indexContent
+
+chessContent :: UUID -> Html
+chessContent uuid = do
+  H.div ! A.id "content-header" $
+    H.div ! A.id "resume-link" $ mempty
+  H.div ! A.id "board" ! A.style "width: 600px" $ mempty
+  H.script ! A.src "http://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js" $ mempty
+  H.script ! A.src "http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" $ mempty
+  H.link ! A.href "/resource/css/chessboard-0.3.0.min.css" ! A.rel "stylesheet" ! A.type_ "text/css"
+  H.script ! A.src "/resource/js/chessboard-0.3.0.min.js" $ mempty
+  H.script ! A.src "/resource/js/play_chess.js" $ mempty
+  H.script ! A.src "/resource/js/chess.js" $ mempty
+  H.script $ toHtml $ "var uuid = \"" ++ (show uuid) ++ "\";"
+  --H.script $ "var uuid = \"test\";"
+
+chessView :: UUID -> Html
+chessView uuid = standardPartial $ chessContent uuid
 
 catView :: Html
 catView = docTypeHtml $ do

@@ -8,9 +8,15 @@ import Network hiding (accept)
 import Network.Socket
 import Network.Socket.ByteString.Lazy as NSBL (getContents, sendAll)
 import Control.Concurrent
+import Control.Concurrent.STM
+import Data.List.Split (splitOn)
+
+import Data.Chess (ChessEngineHandle)
+import Data.Config
 import ResponseRequest
 import App
 import Middleware
+
 
 appWithMiddleware :: Request -> IO Response
 appWithMiddleware req =
@@ -41,17 +47,18 @@ parseOptionsHelper (f:xs) acc
 parseOptions :: [BSL8.ByteString] -> Map.Map String String
 parseOptions l = Map.fromList $ parseOptionsHelper l []
 
-parseRequest :: [BSL8.ByteString] -> Request
-parseRequest l = case (BSL8.words (head l)) of
+parseRequest :: ConfigurationType -> [BSL8.ByteString] -> Request
+parseRequest config l = case (BSL8.words (head l)) of
   -- Should really do some additional validation of the request
   [recvType, recvPath, _] ->
-    Request { rtype = (parseRequestType recvType),
-              path = RawPath $ BSL8.unpack recvPath,
-              options = (parseOptions (tail l))}
+    Request (parseRequestType recvType)
+            (RawPath $ BSL8.unpack recvPath)
+             config
+            (parseOptions (tail l))
 
-connectionAccept :: Socket -> IO ()
-connectionAccept c = do
-  request <- fmap (parseRequest . BSL8.lines) (NSBL.getContents c)
+connectionAccept :: Socket -> ConfigurationType -> IO ()
+connectionAccept c config = do
+  request <- fmap ((parseRequest config) . BSL8.lines) (NSBL.getContents c)
   respond request c
   return ()
 
@@ -62,18 +69,27 @@ welcomeMessage pn = do
 
 main :: IO ()
 main = withSocketsDo $ do
-  contents <- readFile "configuration"
-  welcomeMessage (read contents :: Int)
-  sock <- listenOn $ PortNumber $ fromIntegral
-          $ (read :: String -> Integer) contents
-  loop sock
+  contents <- fmap (filter (not . null)) $ fmap (splitOn "\n") $ readFile "configuration"
+  case envAndPortFromLines contents of
+   (Just e, Just pn) -> do
+     sharedEngineHandles <- atomically $ newTVar $ Map.fromList []
+     welcomeMessage pn
+     sock <- listenOn $ PortNumber $ fromIntegral pn
+     let config = ConfigurationType sharedEngineHandles e
+     loop sock config
 
-loop :: Socket -> IO ()
-loop sock = do
+   -- Invalid configuration
+   _ -> do
+     putStrLn "Invalid server configuration file."
+     return ()
+
+
+loop :: Socket -> ConfigurationType -> IO ()
+loop sock config = do
    (connection,_) <- accept sock
-   forkIO $ daemon connection
-   loop sock
+   forkIO $ daemon connection config
+   loop sock config
   where
-   daemon c = do
-       connectionAccept c
+   daemon c conf = do
+       connectionAccept c conf
        Network.Socket.sClose c

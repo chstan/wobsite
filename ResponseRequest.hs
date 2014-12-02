@@ -3,6 +3,7 @@ module ResponseRequest
        , PathType (RawPath, ProcessedPath)
        , raw
        , processed
+
        , Request (Request)
        , ContentDescType (HTML,
                           PLAIN,
@@ -10,12 +11,14 @@ module ResponseRequest
                           PDF,
                           JPEG,
                           PNG,
-                          TAR)
+                          TAR,
+                          JSON)
        , EncodingType (UNZIP,
                        GZIP)
        , Response (Response)
        , rtype
        , path
+       , serverConfig
        , options
        , version
        , statuscode
@@ -25,6 +28,7 @@ module ResponseRequest
 
 import qualified Data.Map as Map
 import Data.ByteString.Lazy.Char8 as BSL8
+import Data.Config
 
 data PathType = RawPath { raw :: String }
               | ProcessedPath { processed :: [String] } deriving (Show)
@@ -32,6 +36,7 @@ data PathType = RawPath { raw :: String }
 data RequestType = GET | POST | PUT | DELETE deriving (Show)
 data Request = Request { rtype :: RequestType,
                          path :: PathType,
+                         serverConfig :: ConfigurationType,
                          options :: Map.Map String String } deriving (Show)
 
 data EncodingType = UNZIP | GZIP
@@ -40,7 +45,7 @@ instance Show EncodingType where
     UNZIP -> "identity"
     GZIP -> "gzip"
 
-data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG | PNG | TAR
+data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG | PNG | TAR | JSON
 instance Show ContentDescType where
   show c = case c of
     HTML -> "text/html"
@@ -50,6 +55,7 @@ instance Show ContentDescType where
     JPEG -> "image/jpeg"
     PNG -> "image/png"
     TAR -> "application/x-tar"
+    _ -> "text/plain"
 
 data Response = Response { version :: String,
                            statuscode :: Int,

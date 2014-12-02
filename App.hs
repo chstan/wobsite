@@ -20,6 +20,11 @@ applicationRoutes =
               match "secret"
               match "cat"
               return catHandler
+         , do match "chess"
+              matchNone
+              return chessHandler
+         , do match "chess"
+              return computerChessHandler
          , do match "resource"
               return $ tmpResourceHandler -- please forgive me
          , do match "resource"
