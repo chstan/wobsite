@@ -41,6 +41,7 @@ executable WebServer
                      , time >= 1.4
                      , uuid >= 1.2.6
                      , zlib >= 0.5.4.0
+                     , safe >= 0.3.4
   -- hs-source-dirs:
   --ghc-options:
 
