@@ -38,8 +38,7 @@ executable WebServer
                      , split >= 0.2.2
                      , stm >= 2.4.3
                      , text >= 1.2.0.0
-                     , time >= 1.5
-                     , uuid >= 1.2.6
+                     , time >= 1.4
                      , uuid >= 1.2.6
                      , zlib >= 0.5.4.0
   -- hs-source-dirs:
