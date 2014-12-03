@@ -20,7 +20,7 @@ import Middleware
 
 appWithMiddleware :: Request -> IO Response
 appWithMiddleware req =
-  ((liftM $ compressResponse req) . application . breakPath) req
+  ((fmap cacheImages) . (liftM $ compressResponse req) . application . breakPath) req
 
 respond :: Request -> Socket -> IO ()
 respond req c  = do

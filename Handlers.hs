@@ -57,19 +57,20 @@ cachedReadFile :: String -> IO ByteString
 cachedReadFile s = cachedByKey s 0 $ BSL8.readFile s
 
 echoHandler :: RequestHandler
-echoHandler req = return $ Response "HTTP/1.1" 200 UNZIP PLAIN (pack $ show req)
+echoHandler req = return $ Response "HTTP/1.1" 200 UNZIP PLAIN Dynamic (pack $ show req)
 
 jsonHandler :: String -> RequestHandler
-jsonHandler s _ = return $ Response "HTTP/1.1" 200 UNZIP JSON (pack $ s)
+jsonHandler s _ = return $ Response "HTTP/1.1" 200 UNZIP JSON Dynamic (pack $ s)
 
 fourOhFourHandler :: RequestHandler
 fourOhFourHandler _ = return $ Response "HTTP/1.1" 404 UNZIP
-                      PLAIN (pack $ "Oh man! 404...")
+                      PLAIN Dynamic (pack $ "Oh man! 404...")
 
 fileHandler :: String -> RequestHandler
 fileHandler s _ = do
   contents <- cachedReadFile s
-  return $ Response "HTTP/1.1" 200 UNZIP (inferContentDescType s) contents
+  return $ Response "HTTP/1.1" 200 UNZIP (inferContentDescType s)
+    (Cacheable []) contents
 
 tmpResourceHandler :: RequestHandler
 tmpResourceHandler req =
@@ -81,15 +82,15 @@ resourceHandler :: String -> RequestHandler
 resourceHandler s = fileHandler ("res/" ++ s)
 
 indexHandler :: RequestHandler
-indexHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML $
+indexHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                  HR.renderHtml $ indexView
 
 contactHandler :: RequestHandler
-contactHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML $
+contactHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                    HR.renderHtml $ contactView
 
 resumeHandler :: RequestHandler
-resumeHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML $
+resumeHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                 HR.renderHtml $ resumeView
 
 createChessEngine :: String -> IO (Maybe Handle, Maybe Handle, Maybe ProcessHandle)
@@ -219,11 +220,11 @@ computerChessHandler req
 chessHandler :: RequestHandler
 chessHandler _ = do
   uuid <- nextRandom
-  return $ Response "HTTP/1.1" 200 UNZIP HTML $
+  return $ Response "HTTP/1.1" 200 UNZIP HTML Dynamic $
     HR.renderHtml $ chessView uuid
 
 catHandler :: RequestHandler
-catHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML $
+catHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                HR.renderHtml $ catView
 
 robotsHandler :: RequestHandler
@@ -234,7 +235,7 @@ projectIndexHandler req = do
   dec <- eitherDecode <$> cachedReadFile "res/project_descriptions.json"
   case dec of
    Left _ -> fourOhFourHandler req -- Meh, could be a better response.
-   Right projects -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
+   Right projects -> return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                      HR.renderHtml $ projectIndexView projects
 
 booksHandler :: RequestHandler
@@ -242,7 +243,7 @@ booksHandler req = do
   dec <- eitherDecode <$> cachedReadFile "res/books.json"
   case dec of
    Left _ -> fourOhFourHandler req
-   Right books -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
+   Right books -> return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                   HR.renderHtml $ booksView books
 
 staticPageHandler :: String -> RequestHandler
@@ -252,7 +253,7 @@ staticPageHandler entryName req = do
     Nothing -> fourOhFourHandler req
     Just listing -> do
       content <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack m_location))
-      return $ Response "HTTP/1.1" 200 UNZIP HTML $
+      return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
         HR.renderHtml $ blogEntryView listing content
        where m_location = markdown_location listing
 
@@ -262,7 +263,7 @@ blogIndexHandler req = do
   dec <- eitherDecode <$> cachedReadFile "res/blog_entries.json"
   case dec of
    Left _ -> fourOhFourHandler req
-   Right entries -> return $ Response "HTTP/1.1" 200 UNZIP HTML $
+   Right entries -> return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                     HR.renderHtml $ blogIndexView entries
 
 blogEntryHandler :: String -> RequestHandler
@@ -272,6 +273,6 @@ blogEntryHandler entryName req = do
     Nothing -> fourOhFourHandler req
     Just listing -> do
       content <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack m_location))
-      return $ Response "HTTP/1.1" 200 UNZIP HTML $
+      return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
         HR.renderHtml $ blogEntryView listing content
        where m_location = markdown_location listing

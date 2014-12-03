@@ -1,7 +1,7 @@
 module Middleware
-       (breakPath,
-        compressResponse
-        ) where
+       ( breakPath
+       , compressResponse
+       , cacheImages) where
 
 import qualified Data.Map as Map
 import Data.List.Split   (splitOn)
@@ -24,3 +24,14 @@ compressResponse req resp
     allowedOptions = splitOn ", " allowedOptionsString
     allowedOptionsString = Map.findWithDefault "" "Accept-Encoding" (options req)
     unzippedBody = body resp
+
+cacheMimes :: [ContentDescType] -> Response -> Response
+cacheMimes ms r =
+  case cachingInfo r of
+   Dynamic -> r
+   _ -> case elem (contentDescription r) ms of
+     True -> setCaching r
+     False -> r
+
+cacheImages :: Response -> Response
+cacheImages = cacheMimes [JPEG, PNG]
