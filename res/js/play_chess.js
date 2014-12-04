@@ -17,18 +17,11 @@ var init = function() {
         // game over
         if (possibleMoves.length === 0) return;
 
-        //var randomIndex = Math.floor(Math.random() * possibleMoves.length);
-        var fullUrl = window.location;
-        var baseUrl = fullUrl .protocol + "//" + fullUrl.host + "/";
-
-        //game.move(possibleMoves[randomIndex]);
-
         var FEN = game.fen();
         FEN = FEN.replace(/ /g, "_");
         FEN = FEN.replace(/\//g, "~");
         var pollingURL = '/chess/' + uuid + "/" + FEN;
         (function pollServerForMove() {
-            console.log(uuid);
             $.getJSON(pollingURL, function(data, textStatus, jqXHR) {
                 if (data.bestMove) {
                     // insert the dash that chess.js wants

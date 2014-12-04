@@ -12,7 +12,8 @@ module ResponseRequest
                           JPEG,
                           PNG,
                           TAR,
-                          JSON)
+                          JSON,
+                          JS)
        , EncodingType (UNZIP,
                        GZIP)
        , CachingInfo (Dynamic,
@@ -55,7 +56,9 @@ instance Show EncodingType where
     UNZIP -> "identity"
     GZIP -> "gzip"
 
-data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG | PNG | TAR | JSON deriving (Eq)
+data ContentDescType = HTML | PLAIN | CSS | PDF | JPEG | PNG | TAR | JSON | JS
+                     deriving (Eq)
+
 instance Show ContentDescType where
   show c = case c of
     HTML -> "text/html"
@@ -65,7 +68,9 @@ instance Show ContentDescType where
     JPEG -> "image/jpeg"
     PNG -> "image/png"
     TAR -> "application/x-tar"
-    _ -> "text/plain"
+    JSON -> "application/json"
+    JS -> "text/javascript"
+    --_ -> "text/plain"
 
 data CacheHeader = Public | Private | Nocache | MaxAge Int
 instance Show CacheHeader where
@@ -100,6 +105,7 @@ instance Show Response where
               "Content-Length: " ++ show(BSL8.length $ body resp) ++ "\r\n" ++
               "Content-Encoding: " ++ show(encoding resp) ++ "\r\n" ++
               show(cachingInfo resp) ++
+              "Connection: close" ++ "\r\n" ++
               "\r\n" ++ (unpack $ body resp) ++ "\r\n"
 
 setCaching :: Response -> Response
