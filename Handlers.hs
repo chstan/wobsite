@@ -19,31 +19,26 @@ module Handlers
         staticPageHandler,
         robotsHandler) where
 
-import Control.Monad.Loops (iterateWhile)
-import Control.Concurrent (threadDelay, forkIO)
-import Data.Maybe (fromJust)
+import System.IO (hFlush)
 import qualified Data.Map as Map
 import Control.Monad.STM (STM)
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, modifyTVar)
-import System.IO (Handle, hFlush, hGetLine, hIsEOF)
-import System.Process (createProcess, proc, StdStream(CreatePipe), std_out, std_in,
-                       ProcessHandle)
 import Data.UUID.V4 (nextRandom)
 import Data.List (intercalate)
 import qualified Data.Text as T
 import qualified Data.Text.Lazy.IO as TLIO
 import Data.Text.Lazy.Encoding
 import Data.ByteString.Lazy.Char8 as BSL8
-import Data.Aeson          (eitherDecode)
+import Data.Aeson          (FromJSON, eitherDecode)
 import Control.Applicative ((<$>))
 
 import Data.TCache.Memoization (cachedByKey)
 
+import Text.Blaze.Html (Html(..))
 import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 
 import ResponseRequest
 import Data.Config (engineHandles, serverEnv, engineCommand)
-import Aux                 (inferContentDescType, fiveMinutesFromNow, hReadLines)
 import Views.StaticViews
 import Views.BlogEntry
 import Views.Chess
@@ -92,86 +87,6 @@ contactHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
 resumeHandler :: RequestHandler
 resumeHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                 HR.renderHtml $ resumeView
-
-createChessEngine :: String -> IO (Maybe Handle, Maybe Handle, Maybe ProcessHandle)
-createChessEngine c = do
-  (stdinHandle, stdoutHandle, _, processHandle) <-
-    createProcess (proc c ["--uci", "engine.log"]){ std_in = CreatePipe,
-                                                    std_out = CreatePipe}
-  return (stdinHandle, stdoutHandle, Just processHandle)
-
-createOrFindEngine :: String -> String -> TVar (Map.Map String ChessEngineHandle) ->
-                      IO ChessEngineHandle
--- this is all kinds of buggy, doesn't close handles if some are just and some are not
--- also gross that it opens a process before entering STM
-createOrFindEngine c uuidString handles = do
-  expiry <- fiveMinutesFromNow
-  (pStdinHandle, pStdoutHandle, pProcessHandle) <- createChessEngine c
-  (h, wasInMap) <- atomically $ do
-    unwrappedHandles <- readTVar handles
-    let isAlreadyInMap = Map.member uuidString unwrappedHandles
-    let newUnwrappedHandles = case isAlreadyInMap of
-          -- No engine in the list of running engines, spin up a new one
-          False -> do
-            let newHandle = maybeChessEngineHandle pStdinHandle
-                            pStdoutHandle
-                            pProcessHandle
-                            (Just expiry)
-                            (Just IDLE)
-                            (Just [])
-            (Map.insert uuidString (fromJust newHandle) unwrappedHandles)
-
-          -- Found an engine, update the expiration date and return it
-          True -> do
-            let ChessEngineHandle stdinHandle stdoutHandle processHandle _ state ls =
-                  unwrappedHandles Map.! uuidString
-            let updatedHandle = ChessEngineHandle stdinHandle
-                                stdoutHandle
-                                processHandle
-                                expiry
-                                state
-                                ls
-            Map.insert uuidString updatedHandle unwrappedHandles
-    let foundHandle = newUnwrappedHandles Map.! uuidString
-    writeTVar handles newUnwrappedHandles
-    return (foundHandle, isAlreadyInMap)
-  case wasInMap of
-   False -> do
-     -- spawn watcher
-     forkIO $ do
-       -- check until we killed it because no one was using, can't trust the client!
-       iterateWhile id $ do
-         -- wait five minutes
-         threadDelay (5 * 60 * 1000000)
-         checkOnEngineByUUID handles uuidString
-       return ()
-
-     -- spawn IO monitor for async reads from engine stdout
-     let recordLines stmH hRead = do
-           atEOF <- hIsEOF hRead
-           if atEOF
-             then return ()
-             else do
-               l <- hGetLine hRead
-               atomically $ modifyTVar stmH (Map.adjust (appendEngineLine l) uuidString)
-               recordLines stmH hRead
-       in forkIO $ recordLines handles (engineStdOut h)
-
-
-     -- prep the engine
-     hPutStrLn (engineStdIn h) "uci"
-     hPutStrLn (engineStdIn h) "isready"
-     hFlush (engineStdIn h)
-     return ()
-   True -> do
-     -- kill the spawned process
-     let toKill = maybeChessEngineHandle pStdinHandle pStdoutHandle
-                  pProcessHandle (Just expiry) (Just IDLE) (Just [])
-     case toKill of
-      Nothing -> return ()
-      Just engine -> killEngine engine
-
-  return h
 
 computerChessHandler :: RequestHandler
 computerChessHandler req
@@ -230,49 +145,35 @@ catHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
 robotsHandler :: RequestHandler
 robotsHandler = resourceHandler "robots.txt"
 
-projectIndexHandler :: RequestHandler
-projectIndexHandler req = do
-  dec <- eitherDecode <$> cachedReadFile "res/project_descriptions.json"
-  case dec of
-   Left _ -> fourOhFourHandler req -- Meh, could be a better response.
-   Right projects -> return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
-                     HR.renderHtml $ projectIndexView projects
-
-booksHandler :: RequestHandler
-booksHandler req = do
-  dec <- eitherDecode <$> cachedReadFile "res/books.json"
-  case dec of
-   Left _ -> fourOhFourHandler req
-   Right books -> return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
-                  HR.renderHtml $ booksView books
-
-staticPageHandler :: String -> RequestHandler
-staticPageHandler entryName req = do
-  dec <- eitherDecode <$> cachedReadFile "res/pages.json"
-  case (lookupBlogEntry entryName dec) of
-    Nothing -> fourOhFourHandler req
-    Just listing -> do
-      content <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack m_location))
-      return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
-        HR.renderHtml $ blogEntryView listing content
-       where m_location = markdown_location listing
-
-
-blogIndexHandler :: RequestHandler
-blogIndexHandler req = do
-  dec <- eitherDecode <$> cachedReadFile "res/blog_entries.json"
-  case dec of
+genIndexHandler :: (FromJSON a) => String -> ([a] -> Html) -> RequestHandler
+genIndexHandler indexFile view req = do
+  d <- eitherDecode <$> cachedReadFile indexFile
+  case d of
    Left _ -> fourOhFourHandler req
    Right entries -> return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
-                    HR.renderHtml $ blogIndexView entries
+                    HR.renderHtml $ view entries
+
+genStaticPageHandler :: String -> String -> RequestHandler
+genStaticPageHandler indexFile name req = do
+  d <- eitherDecode <$> cachedReadFile indexFile
+  case (lookupBlogEntry name d) of
+   Nothing -> fourOhFourHandler req
+   Just l -> do
+     c <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack $ markdown_location l))
+     return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
+       HR.renderHtml $ blogEntryView l c
+
+booksHandler :: RequestHandler
+booksHandler = genIndexHandler "res/books.json" booksView
+
+blogIndexHandler :: RequestHandler
+blogIndexHandler = genIndexHandler "res/blog_entries.json" blogIndexView
+
+projectIndexHandler :: RequestHandler
+projectIndexHandler = genIndexHandler "res/project_descriptions.json" projectIndexView
+
+staticPageHandler :: String -> RequestHandler
+staticPageHandler = genStaticPageHandler "res/pages.json"
 
 blogEntryHandler :: String -> RequestHandler
-blogEntryHandler entryName req = do
-  dec <- eitherDecode <$> cachedReadFile "res/blog_entries.json"
-  case (lookupBlogEntry entryName dec) of
-    Nothing -> fourOhFourHandler req
-    Just listing -> do
-      content <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack m_location))
-      return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
-        HR.renderHtml $ blogEntryView listing content
-       where m_location = markdown_location listing
+blogEntryHandler = genStaticPageHandler "res/blog_entries.json"

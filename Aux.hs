@@ -1,38 +1,19 @@
 module Aux
        (pairFn,
-        inferContentDescType,
         tailSafe,
         oneAndMatches,
         dummyParam,
         fiveMinutesFromNow,
-        hReadLines
         ) where
 
 import qualified Control.Exception as Exc
 import System.IO
 import Data.Time.Clock
 import Data.Time.Lens
-import System.FilePath (takeExtension)
-
-import ResponseRequest (ContentDescType (..))
-
 
 pairFn :: (a -> b) -> (a -> c) -> a -> (b, c)
 pairFn fn1 fn2 el =
   (fn1 el, fn2 el)
-
-inferContentDescType :: String -> ContentDescType
-inferContentDescType loc = case takeExtension loc of
-  ".css" -> CSS
-  ".html" -> HTML
-  ".pdf" -> PDF
-  ".png" -> PNG
-  ".jpg" -> JPEG
-  ".jpeg" -> JPEG -- REFACTOR INTO GUARD
-  ".tar" -> TAR
-  ".json" -> JSON
-  ".js" -> JS
-  _ -> PLAIN
 
 tailSafe :: [a] -> [a]
 tailSafe [] = []

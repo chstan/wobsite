@@ -14,10 +14,14 @@ module ResponseRequest
                           TAR,
                           JSON,
                           JS)
+       , inferContentDescType
+
        , EncodingType (UNZIP,
                        GZIP)
+
        , CachingInfo (Dynamic,
                       Cacheable)
+
        , CacheHeader (Public,
                       Private,
                       Nocache,
@@ -40,6 +44,7 @@ import qualified Data.Map as Map
 import Data.ByteString.Lazy.Char8 as BSL8
 import Data.Config
 import Data.List (intercalate)
+import System.FilePath (takeExtension)
 
 data PathType = RawPath { raw :: String }
               | ProcessedPath { processed :: [String] } deriving (Show)
@@ -71,6 +76,20 @@ instance Show ContentDescType where
     JSON -> "application/json"
     JS -> "text/javascript"
     --_ -> "text/plain"
+
+inferContentDescType :: String -> ContentDescType
+inferContentDescType loc = case takeExtension loc of
+  ".css" -> CSS
+  ".html" -> HTML
+  ".pdf" -> PDF
+  ".png" -> PNG
+  ".jpg" -> JPEG
+  ".jpeg" -> JPEG -- REFACTOR INTO GUARD
+  ".tar" -> TAR
+  ".json" -> JSON
+  ".js" -> JS
+  _ -> PLAIN
+
 
 data CacheHeader = Public | Private | Nocache | MaxAge Int
 instance Show CacheHeader where

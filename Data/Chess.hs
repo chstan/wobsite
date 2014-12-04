@@ -13,18 +13,25 @@ module Data.Chess
         clearEngineLines,
         killEngine,
         checkOnEngineByUUID,
-        bestMoveFromEngineOutput
+        bestMoveFromEngineOutput,
+        createOrFindEngine
        ) where
 
+import Control.Monad.Loops (iterateWhile)
+import Control.Concurrent (threadDelay, forkIO)
 import Data.Char (isSpace)
 import Data.List (stripPrefix)
 import Control.Monad (when)
-import System.IO (Handle, hPutStrLn, hFlush, hClose, hGetContents)
+import System.Process (createProcess, proc, StdStream(CreatePipe), std_out, std_in,
+                       ProcessHandle)
+import System.IO (Handle, hPutStrLn, hFlush, hClose, hGetContents, hIsEOF, hGetLine)
 import qualified Data.Map as Map
-import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar)
+import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, modifyTVar)
 import System.Process (ProcessHandle, waitForProcess)
 import Data.Time (UTCTime, getCurrentTime)
 import Data.Maybe (fromJust, catMaybes, listToMaybe)
+
+import Aux (fiveMinutesFromNow)
 
 data ChessEngineState = RUNNING | IDLE
 data ChessEngineHandle = ChessEngineHandle { engineStdIn :: Handle,
@@ -92,3 +99,83 @@ trim = f . f
 bestMoveFromEngineOutput :: [String] -> Maybe String
 bestMoveFromEngineOutput ls =
   fmap trim  $ listToMaybe $ catMaybes $ fmap (stripPrefix "bestmove") ls
+
+createChessEngine :: String -> IO (Maybe Handle, Maybe Handle, Maybe ProcessHandle)
+createChessEngine c = do
+  (stdinHandle, stdoutHandle, _, processHandle) <-
+    createProcess (proc c ["--uci", "engine.log"]){ std_in = CreatePipe,
+                                                    std_out = CreatePipe}
+  return (stdinHandle, stdoutHandle, Just processHandle)
+
+createOrFindEngine :: String -> String -> TVar (Map.Map String ChessEngineHandle) ->
+                      IO ChessEngineHandle
+-- this is all kinds of buggy, doesn't close handles if some are just and some are not
+-- also gross that it opens a process before entering STM
+createOrFindEngine c uuidString handles = do
+  expiry <- fiveMinutesFromNow
+  (pStdinHandle, pStdoutHandle, pProcessHandle) <- createChessEngine c
+  (h, wasInMap) <- atomically $ do
+    unwrappedHandles <- readTVar handles
+    let isAlreadyInMap = Map.member uuidString unwrappedHandles
+    let newUnwrappedHandles = case isAlreadyInMap of
+          -- No engine in the list of running engines, spin up a new one
+          False -> do
+            let newHandle = maybeChessEngineHandle pStdinHandle
+                            pStdoutHandle
+                            pProcessHandle
+                            (Just expiry)
+                            (Just IDLE)
+                            (Just [])
+            (Map.insert uuidString (fromJust newHandle) unwrappedHandles)
+
+          -- Found an engine, update the expiration date and return it
+          True -> do
+            let ChessEngineHandle stdinHandle stdoutHandle processHandle _ state ls =
+                  unwrappedHandles Map.! uuidString
+            let updatedHandle = ChessEngineHandle stdinHandle
+                                stdoutHandle
+                                processHandle
+                                expiry
+                                state
+                                ls
+            Map.insert uuidString updatedHandle unwrappedHandles
+    let foundHandle = newUnwrappedHandles Map.! uuidString
+    writeTVar handles newUnwrappedHandles
+    return (foundHandle, isAlreadyInMap)
+  case wasInMap of
+   False -> do
+     -- spawn watcher
+     forkIO $ do
+       -- check until we killed it because no one was using, can't trust the client!
+       iterateWhile id $ do
+         -- wait five minutes
+         threadDelay (5 * 60 * 1000000)
+         checkOnEngineByUUID handles uuidString
+       return ()
+
+     -- spawn IO monitor for async reads from engine stdout
+     let recordLines stmH hRead = do
+           atEOF <- hIsEOF hRead
+           if atEOF
+             then return ()
+             else do
+               l <- hGetLine hRead
+               atomically $ modifyTVar stmH (Map.adjust (appendEngineLine l) uuidString)
+               recordLines stmH hRead
+       in forkIO $ recordLines handles (engineStdOut h)
+
+
+     -- prep the engine
+     hPutStrLn (engineStdIn h) "uci"
+     hPutStrLn (engineStdIn h) "isready"
+     hFlush (engineStdIn h)
+     return ()
+   True -> do
+     -- kill the spawned process
+     let toKill = maybeChessEngineHandle pStdinHandle pStdoutHandle
+                  pProcessHandle (Just expiry) (Just IDLE) (Just [])
+     case toKill of
+      Nothing -> return ()
+      Just engine -> killEngine engine
+
+  return h
