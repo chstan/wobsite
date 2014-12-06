@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Handlers
        (RequestHandler,
@@ -11,6 +12,7 @@ module Handlers
         echoHandler,
         chessHandler,
         computerChessHandler,
+        chessResultHandler,
         catHandler,
         contactHandler,
         booksHandler,
@@ -20,25 +22,25 @@ module Handlers
         robotsHandler) where
 
 import System.IO (hFlush)
+import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
-import Control.Monad.STM (STM)
-import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, modifyTVar)
+import Control.Concurrent.STM (atomically, modifyTVar, readTVar)
 import Data.UUID.V4 (nextRandom)
 import Data.List (intercalate)
 import qualified Data.Text as T
-import qualified Data.Text.Lazy.IO as TLIO
 import Data.Text.Lazy.Encoding
-import Data.ByteString.Lazy.Char8 as BSL8
+import qualified Data.ByteString.Char8 as BS8
+import qualified Data.ByteString.Lazy.Char8 as BSL8
 import Data.Aeson          (FromJSON, eitherDecode)
 import Control.Applicative ((<$>))
 
 import Data.TCache.Memoization (cachedByKey)
 
-import Text.Blaze.Html (Html(..))
+import Text.Blaze.Html (Html)
 import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 
 import ResponseRequest
-import Data.Config (engineHandles, serverEnv, engineCommand)
+import Data.Config (engineHandles, serverEnv, engineCommand, engineRecordPath)
 import Views.StaticViews
 import Views.BlogEntry
 import Views.Chess
@@ -48,18 +50,18 @@ import Data.BlogEntry (lookupBlogEntry, markdown_location)
 
 type RequestHandler = Request -> IO Response
 
-cachedReadFile :: String -> IO ByteString
+cachedReadFile :: String -> IO BSL8.ByteString
 cachedReadFile s = cachedByKey s 0 $ BSL8.readFile s
 
 echoHandler :: RequestHandler
-echoHandler req = return $ Response "HTTP/1.1" 200 UNZIP PLAIN Dynamic (pack $ show req)
+echoHandler req = return $ Response "HTTP/1.1" 200 UNZIP PLAIN Dynamic (BSL8.pack $ show req)
 
 jsonHandler :: String -> RequestHandler
-jsonHandler s _ = return $ Response "HTTP/1.1" 200 UNZIP JSON Dynamic (pack $ s)
+jsonHandler s _ = return $ Response "HTTP/1.1" 200 UNZIP JSON Dynamic (BSL8.pack $ s)
 
 fourOhFourHandler :: RequestHandler
 fourOhFourHandler _ = return $ Response "HTTP/1.1" 404 UNZIP
-                      PLAIN Dynamic (pack $ "Oh man! 404...")
+                      PLAIN Dynamic (BSL8.pack $ "Oh man! 404...")
 
 fileHandler :: String -> RequestHandler
 fileHandler s _ = do
@@ -88,6 +90,36 @@ resumeHandler :: RequestHandler
 resumeHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                 HR.renderHtml $ resumeView
 
+chessResultHandler :: String -> String -> RequestHandler
+chessResultHandler uuid result req = do
+  mHandle <- atomically $ do
+    handlesMap <- readTVar handles
+    let mh = Map.lookup uuid handlesMap
+    case mh of
+     Nothing -> return Nothing
+     Just _ -> do
+       modifyTVar handles (Map.delete uuid)
+       return mh
+
+  case mHandle of
+   -- no game to finish by this uuid
+   Nothing -> jsonHandler (chessResultJSONView "NO_GAME") req
+   Just h -> do
+     -- kill the engine
+     killEngine h
+     -- update the results
+     let rp = (engineRecordPath $ serverEnv $ serverConfig req)
+
+     -- strict byte string read file to avoid file lock error
+     recordString <- fmap BS8.unpack $ BS8.readFile rp
+     let r = fromMaybe (GameRecord 0 0 0) $ recordFromString $ trim recordString
+     writeFile rp $ (show $ updateRecord result r)
+
+     -- let the client know that all went well
+     jsonHandler (chessResultJSONView "FINISHED_GAME") req
+
+  where handles = engineHandles $ serverConfig req
+
 computerChessHandler :: RequestHandler
 computerChessHandler req
   | Prelude.length pathElems < 3 = jsonHandler (chessJSONView "" []) req
@@ -102,8 +134,8 @@ computerChessHandler req
        IDLE -> do
          atomically $ modifyTVar (engineHandles $ serverConfig req)
            (Map.adjust (setEngineState RUNNING) uuidString)
-         hPutStrLn (engineStdIn engineHandle) (pack $ "position fen " ++ fenString)
-         hPutStrLn (engineStdIn engineHandle) (pack $ "go wtime 120000 btime 120000 winc 0 binc 0")
+         BSL8.hPutStrLn (engineStdIn engineHandle) (BSL8.pack $ "position fen " ++ fenString)
+         BSL8.hPutStrLn (engineStdIn engineHandle) (BSL8.pack $ "go wtime 120000 btime 120000 winc 0 binc 0")
          hFlush (engineStdIn engineHandle)
          jsonHandler (chessJSONView "" []) req
 
@@ -133,10 +165,12 @@ computerChessHandler req
         (uuidString, rawFenString) = (pathElems !! 1, pathElems !! 2)
 
 chessHandler :: RequestHandler
-chessHandler _ = do
+chessHandler req = do
   uuid <- nextRandom
+  -- Don't cache this file! It is updated throughout execution
+  recordString <- Prelude.readFile (engineRecordPath $ serverEnv $ serverConfig req)
   return $ Response "HTTP/1.1" 200 UNZIP HTML Dynamic $
-    HR.renderHtml $ chessView uuid
+    HR.renderHtml $ chessView uuid $ recordFromString $ trim recordString
 
 catHandler :: RequestHandler
 catHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $

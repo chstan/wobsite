@@ -3,7 +3,7 @@ module Aux
         tailSafe,
         oneAndMatches,
         dummyParam,
-        fiveMinutesFromNow,
+        nMinutesFromNow,
         ) where
 
 import qualified Control.Exception as Exc
@@ -28,10 +28,10 @@ oneAndMatches p (x:_)
 dummyParam :: a -> b -> a
 dummyParam f _ = f
 
-fiveMinutesFromNow :: IO UTCTime
-fiveMinutesFromNow = do
+nMinutesFromNow :: Int -> IO UTCTime
+nMinutesFromNow n = do
   now <- getCurrentTime
-  return $ modL minutes (+5) now
+  return $ modL minutes (+n) now
 
 _hReadLinesNew :: [String] -> Handle -> IO [String]
 _hReadLinesNew ls h = do

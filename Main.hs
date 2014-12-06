@@ -11,7 +11,6 @@ import Control.Concurrent
 import Control.Concurrent.STM
 import Data.List.Split (splitOn)
 
-import Data.Chess (ChessEngineHandle)
 import Data.Config
 import ResponseRequest
 import App
@@ -69,7 +68,7 @@ welcomeMessage pn = do
 
 main :: IO ()
 main = withSocketsDo $ do
-  contents <- fmap (filter (not . null)) $ fmap (splitOn "\n") $ readFile "configuration"
+  contents <- fmap (filter (not . null)) $ fmap (splitOn "\n") $ readFile "config/configuration"
   case envAndPortFromLines contents of
    (Just e, Just pn) -> do
      sharedEngineHandles <- atomically $ newTVar $ Map.fromList []

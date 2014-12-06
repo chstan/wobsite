@@ -14,24 +14,31 @@ module Data.Chess
         killEngine,
         checkOnEngineByUUID,
         bestMoveFromEngineOutput,
-        createOrFindEngine
+        createOrFindEngine,
+
+        GameRecord (GameRecord),
+        updateRecord,
+        recordFromString,
+
+        trim
        ) where
 
 import Control.Monad.Loops (iterateWhile)
 import Control.Concurrent (threadDelay, forkIO)
 import Data.Char (isSpace)
 import Data.List (stripPrefix)
+import Data.List.Split (splitOn)
 import Control.Monad (when)
 import System.Process (createProcess, proc, StdStream(CreatePipe), std_out, std_in,
                        ProcessHandle)
-import System.IO (Handle, hPutStrLn, hFlush, hClose, hGetContents, hIsEOF, hGetLine)
+import System.IO (Handle, hPutStrLn, hFlush, hClose, hIsEOF, hGetLine)
 import qualified Data.Map as Map
 import Control.Concurrent.STM (TVar, atomically, readTVar, writeTVar, modifyTVar)
-import System.Process (ProcessHandle, waitForProcess)
+import System.Process (waitForProcess)
 import Data.Time (UTCTime, getCurrentTime)
 import Data.Maybe (fromJust, catMaybes, listToMaybe)
 
-import Aux (fiveMinutesFromNow)
+import Aux (nMinutesFromNow)
 
 data ChessEngineState = RUNNING | IDLE
 data ChessEngineHandle = ChessEngineHandle { engineStdIn :: Handle,
@@ -40,6 +47,24 @@ data ChessEngineHandle = ChessEngineHandle { engineStdIn :: Handle,
                                              expirationDate :: UTCTime,
                                              engineState :: ChessEngineState,
                                              unprocessedLines :: [String] }
+
+data GameRecord = GameRecord Int Int Int
+instance Show GameRecord where
+  show (GameRecord w l t) =
+    (show w) ++ "-" ++ (show l) ++ "-" ++ (show t)
+
+updateRecord :: String -> GameRecord -> GameRecord
+updateRecord "win" (GameRecord w l t) = GameRecord (w+1) l t
+updateRecord "loss" (GameRecord w l t) = GameRecord w (l+1) t
+updateRecord "tie" (GameRecord w l t) = GameRecord w l (t+1)
+updateRecord _ g = g
+
+recordFromString :: String -> Maybe GameRecord
+recordFromString l = recordFromSplitLine ls
+  where ls = fmap read $ splitOn "-" l
+        recordFromSplitLine (win:loss:tie:[]) = Just $ GameRecord win loss tie
+        recordFromSplitLine _ = Nothing
+
 
 maybeChessEngineHandle :: Maybe Handle -> Maybe Handle -> Maybe ProcessHandle ->
                           Maybe UTCTime -> Maybe ChessEngineState -> Maybe [String] ->
@@ -90,7 +115,11 @@ checkOnEngineByUUID stmHandles uuidString = do
 
   when shouldKill $
     killEngine $ fromJust mh
-  return $ not shouldKill
+
+  -- if there is nothing in the map, no need to keep checking
+  case mh of
+   Nothing -> return False
+   _ -> return $ not shouldKill
 
 trim :: String -> String
 trim = f . f
@@ -112,7 +141,7 @@ createOrFindEngine :: String -> String -> TVar (Map.Map String ChessEngineHandle
 -- this is all kinds of buggy, doesn't close handles if some are just and some are not
 -- also gross that it opens a process before entering STM
 createOrFindEngine c uuidString handles = do
-  expiry <- fiveMinutesFromNow
+  expiry <- nMinutesFromNow 5
   (pStdinHandle, pStdoutHandle, pProcessHandle) <- createChessEngine c
   (h, wasInMap) <- atomically $ do
     unwrappedHandles <- readTVar handles

@@ -29,6 +29,7 @@ import Templates.Partial (standardPartial, justified,
 import Data.Project (ProjectSynopsis)
 import Data.BlogEntry (BlogListing)
 import Data.Book (BookRecord)
+import Data.Chess (GameRecord)
 
 booksContent :: [BookRecord] -> Html
 booksContent books = do
@@ -71,10 +72,17 @@ indexContent =
 indexView :: Html
 indexView = standardPartial indexContent
 
-chessContent :: UUID -> Html
-chessContent uuid = do
+boastAboutRecord :: Maybe GameRecord -> Html
+boastAboutRecord Nothing = mempty
+boastAboutRecord (Just r) =
+  p $ toHtml $ "The engine's record against visitors is " ++ show r ++ "."
+
+chessContent :: UUID -> Maybe GameRecord -> Html
+chessContent uuid mr = do
   H.div ! A.id "content-header" $
-    H.div ! A.id "resume-link" $ mempty
+    H.div ! A.id "resume-link" $ do
+      p "Once you've played a move, please give a moment or two for the engine to reply."
+      boastAboutRecord mr
   H.div ! A.id "board" ! A.style "width: 600px" $ mempty
   H.script ! A.src "http://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js" $ mempty
   H.script ! A.src "http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" $ mempty
@@ -85,8 +93,8 @@ chessContent uuid = do
   H.script $ toHtml $ "var uuid = \"" ++ (show uuid) ++ "\";"
   --H.script $ "var uuid = \"test\";"
 
-chessView :: UUID -> Html
-chessView uuid = standardPartial $ chessContent uuid
+chessView :: UUID -> Maybe GameRecord -> Html
+chessView uuid mr = standardPartial $ chessContent uuid mr
 
 catView :: Html
 catView = docTypeHtml $ do

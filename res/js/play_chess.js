@@ -1,4 +1,5 @@
 var init = function() {
+    var gameState = "ongoing";
     var board,
         game = new Chess();
 
@@ -6,16 +7,33 @@ var init = function() {
     // only pick up pieces for White
     var onDragStart = function(source, piece, position, orientation) {
         if (game.in_checkmate() === true || game.in_draw() === true ||
+            game.in_stalemate() === true ||
+            game.in_threefold_repetition() === true ||
             piece.search(/^b/) !== -1) {
             return false;
         }
     };
 
     var makeComputerMove = function() {
-        var possibleMoves = game.moves();
-
-        // game over
-        if (possibleMoves.length === 0) return;
+        // check for game over
+        if (game.moves().length === 0 || game.in_draw() === true ||
+            game.in_threefold_repetition() === true) {
+            if (gameState === "ongoing") {
+                gameState = "finished";
+                result = "";
+                if (game.in_checkmate() === true) {
+                    // server lost
+                    result = "loss";
+                } else {
+                    result = "tie";
+                }
+                var resultURL = '/chess/result/' + uuid + '/' + result;
+                (function notifyServerOfResult() {
+                    $.getJSON(resultURL, function(data, textStatus, jqXHR){});
+                })();
+            }
+            return;
+        }
 
         var FEN = game.fen();
         FEN = FEN.replace(/ /g, "_");
@@ -26,7 +44,7 @@ var init = function() {
                 if (data.bestMove) {
                     // insert the dash that chess.js wants
                     var parsedMove;
-                    if (data.bestMove.length == 4) {
+                    if (data.bestMove.length === 4) {
                         parsedMove = {
                             from: data.bestMove.slice(0, 2),
                             to: data.bestMove.slice(2, 4)
@@ -40,10 +58,26 @@ var init = function() {
                     }
                     game.move(parsedMove);
                     board.position(game.fen());
+                    if (game.moves().length === 0 || game.in_draw() === true ||
+                        game.in_threefold_repetition() === true) {
+                        if (gameState === "ongoing") {
+                            gameState = "finished";
+                            result = "";
+                            if (game.in_checkmate() === true) {
+                                // server won
+                                result = "win";
+                            } else {
+                                result = "tie";
+                            }
+                            var resultURL = '/chess/result/' + uuid + '/' + result;
+                            (function notifyServerOfResult() {
+                                $.getJSON(resultURL, function(data, textStatus, jqXHR){});
+                            })();
+                        }
+                    }
                 } else {
                     setTimeout(pollServerForMove, 1000);
                 }
-
             });
         }());
     };

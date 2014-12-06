@@ -7,6 +7,7 @@ res/
 
 # Deployment files
 configuration
+config/
 
 # Large resources to be rsync-ed/scp-ed
 *.jpg

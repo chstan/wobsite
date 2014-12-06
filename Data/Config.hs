@@ -1,6 +1,7 @@
 module Data.Config
        ( ServerEnvironment (Environment)
        , engineCommand
+       , engineRecordPath
        , ConfigurationType (ConfigurationType)
        , engineHandles
        , serverEnv
@@ -13,11 +14,12 @@ import Safe (readMay)
 
 import Data.Chess
 
-data ServerEnvironment = Environment { engineCommand :: String } deriving (Show)
+data ServerEnvironment = Environment { engineCommand :: String,
+                                       engineRecordPath :: String } deriving (Show)
 
 envAndPortFromLines :: [String] -> (Maybe ServerEnvironment, Maybe Int)
-envAndPortFromLines (pn:cc:[]) =
-  (Just $ Environment cc, readMay pn)
+envAndPortFromLines (pn:cc:rp:[]) =
+  (Just $ Environment cc rp, readMay pn)
 envAndPortFromLines _ = (Nothing, Nothing)
 
 
