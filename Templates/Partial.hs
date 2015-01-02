@@ -6,6 +6,7 @@ module Templates.Partial
         renderProjectSynopsis,
         renderBlogListing,
         renderBookRecord,
+        renderTalkRecord,
         justified,
         googleAnalyticsHook,
         justifiedLeader) where
@@ -20,17 +21,26 @@ import qualified Text.Blaze.Html5.Attributes as A
 
 import Data.Project as Pr
 import Data.Book as Bk
+import Data.Talk as Tk
 import Data.BlogEntry as Bg
 
 bookReadDate :: Bool -> Text -> Html
 bookReadDate False _ = p $ preEscapedString "&mdash;"
-bookReadDate _ date = p $ toHtml date
+bookReadDate _ d = p $ toHtml d
+
+renderTalkRecord :: TalkRecord -> Html
+renderTalkRecord
+  (TalkRecord tName tDate tLocation tPresentationTitle tPresentationURL _) = do
+    p $ do
+      strong $ toHtml (" " ++ (unpack tPresentationTitle))
+      toHtml $ " at " ++ (unpack tName) ++ ", " ++ (unpack tLocation) ++
+               ", " ++ (unpack tDate) ++ ".  "
+      --a ! A.href (H.toValue tPresentationURL) $ "[forthcoming]"
+      a $ "[upcoming]"
 
 renderBookRecord :: BookRecord -> Html
 renderBookRecord
-  BookRecord {Bk.title=b_title, Bk.author=b_author,
-              Bk.completion_date=b_date,
-              Bk.impression=b_imp, Bk.finished=b_finished} = do
+  (BookRecord b_title b_author b_date _ b_finished) = do
     H.div $ do
       cite $ toHtml b_title
       justified (p $ toHtml b_author)
@@ -88,6 +98,7 @@ navPartial =
       li $ H.a ! A.href "./" $ "/"
       li $ H.a ! A.href "/resume" $ "resume"
       li $ H.a ! A.href "/projects" $ "projects"
+      li $ H.a ! A.href "/conferences" $ "talks"
       li $ H.a ! A.href "http://github.com/chstan" $ "github"
       li $ H.a ! A.href "/contact" $ "contact"
       li $ H.a ! A.href "/writing" $ "writing"

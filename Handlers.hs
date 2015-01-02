@@ -5,6 +5,7 @@ module Handlers
        (RequestHandler,
         projectIndexHandler,
         fourOhFourHandler,
+        talksAndPapersHandler,
         resourceHandler,
         tmpResourceHandler,
         indexHandler,
@@ -196,6 +197,9 @@ genStaticPageHandler indexFile name req = do
      c <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack $ markdown_location l))
      return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
        HR.renderHtml $ blogEntryView l c
+
+talksAndPapersHandler :: RequestHandler
+talksAndPapersHandler = genIndexHandler "res/conferences.json" talksAndPapersView
 
 booksHandler :: RequestHandler
 booksHandler = genIndexHandler "res/books.json" booksView

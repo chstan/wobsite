@@ -59,6 +59,14 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
     width: 500px;
 }
 
+.talks-section-header {
+    margin-bottom: 20px;
+}
+
+.talks-header {
+    height: 80px;
+}
+
 .books-header {
     height: 80px;
 }
@@ -102,6 +110,22 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
 
 .projects-content {
     margin-top: 70px;
+}
+
+
+.talks-content p {
+    line-height: 1.6;
+}
+
+.talks-content a {
+    text-decoration: none;
+    color: #DD4814;
+    font-weight: 300;
+}
+
+.talks-content {
+    margin-top: 70px;
+    width: 500px;
 }
 
 .books-content {

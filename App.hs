@@ -51,6 +51,10 @@ applicationRoutes =
               matchNone
               return projectIndexHandler
 
+         , do match "conferences"
+              matchNone
+              return talksAndPapersHandler
+
          , do match "books"
               matchNone
               return booksHandler

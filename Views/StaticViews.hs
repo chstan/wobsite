@@ -6,6 +6,7 @@ module Views.StaticViews
         indexView,
         contactView,
         chessView,
+        talksAndPapersView,
         projectIndexView,
         booksView,
         blogIndexView
@@ -13,7 +14,6 @@ module Views.StaticViews
 
 import Data.UUID (UUID)
 import Data.Monoid (mempty)
-import Control.Monad (mapM_)
 
 import Text.Blaze.Html5
 import Text.Blaze.Internal (preEscapedString)
@@ -24,12 +24,25 @@ import Templates.Resume
 import Templates.Partial (standardPartial, justified,
                           renderProjectSynopsis,
                           renderBlogListing,
-                          renderBookRecord)
+                          renderBookRecord,
+                          renderTalkRecord)
 
 import Data.Project (ProjectSynopsis)
 import Data.BlogEntry (BlogListing)
 import Data.Book (BookRecord)
+import Data.Talk
 import Data.Chess (GameRecord)
+
+talksAndPapersContent :: [TalkRecord] -> Html
+talksAndPapersContent talks = do
+  H.div ! A.class_ "talks-content" $ do
+    H.div ! A.class_ "talks-container" $ do
+      H.div ! A.class_ "talks-section-header" $
+        p $ "Invited talks"
+      mapM_ renderTalkRecord invited_talks
+  where
+    invited_talks = filter invited talks
+    _ = filter (not . invited) talks
 
 booksContent :: [BookRecord] -> Html
 booksContent books = do
@@ -119,6 +132,9 @@ contactView = standardPartial contactContent
 
 projectIndexView :: [ProjectSynopsis] -> Html
 projectIndexView ps = standardPartial $ projectIndexContent ps
+
+talksAndPapersView :: [TalkRecord] -> Html
+talksAndPapersView ts = standardPartial $ talksAndPapersContent ts
 
 booksView :: [BookRecord] -> Html
 booksView bs = standardPartial $ booksContent bs
