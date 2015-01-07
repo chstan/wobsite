@@ -31,12 +31,13 @@ bookReadDate _ d = p $ toHtml d
 renderTalkRecord :: TalkRecord -> Html
 renderTalkRecord
   (TalkRecord tName tDate tLocation tPresentationTitle tPresentationURL _) = do
-    p $ do
-      strong $ toHtml (" " ++ (unpack tPresentationTitle))
-      toHtml $ " at " ++ (unpack tName) ++ ", " ++ (unpack tLocation) ++
-               ", " ++ (unpack tDate) ++ ".  "
-      --a ! A.href (H.toValue tPresentationURL) $ "[forthcoming]"
-      a $ "[upcoming]"
+    H.div ! A.class_ "talks-wrapper" $ do
+      p $ do
+        strong $ toHtml (" " ++ (unpack tPresentationTitle))
+        toHtml $ " at " ++ (unpack tName) ++ ", " ++ (unpack tLocation) ++
+                 ", " ++ (unpack tDate) ++ ".  "
+        --a ! A.href (H.toValue tPresentationURL) $ "[forthcoming]"
+        a $ "[upcoming]"
 
 renderBookRecord :: BookRecord -> Html
 renderBookRecord

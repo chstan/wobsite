@@ -51,8 +51,11 @@ import Data.BlogEntry (lookupBlogEntry, markdown_location)
 
 type RequestHandler = Request -> IO Response
 
-cachedReadFile :: String -> IO BSL8.ByteString
-cachedReadFile s = cachedByKey s 0 $ BSL8.readFile s
+cachedReadFile :: Bool -> String -> IO BSL8.ByteString
+cachedReadFile inProd s = case inProd of
+                           True -> cachedByKey s 0 $ BSL8.readFile s
+                           False -> BSL8.readFile s
+
 
 echoHandler :: RequestHandler
 echoHandler req = return $ Response "HTTP/1.1" 200 UNZIP PLAIN Dynamic (BSL8.pack $ show req)
@@ -65,8 +68,8 @@ fourOhFourHandler _ = return $ Response "HTTP/1.1" 404 UNZIP
                       PLAIN Dynamic (BSL8.pack $ "Oh man! 404...")
 
 fileHandler :: String -> RequestHandler
-fileHandler s _ = do
-  contents <- cachedReadFile s
+fileHandler s r = do
+  contents <- cachedReadFile (isProduction r) s
   return $ Response "HTTP/1.1" 200 UNZIP (inferContentDescType s)
     (Cacheable []) contents
 
@@ -86,10 +89,6 @@ indexHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
 contactHandler :: RequestHandler
 contactHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                    HR.renderHtml $ contactView
-
-resumeHandler :: RequestHandler
-resumeHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
-                HR.renderHtml $ resumeView
 
 chessResultHandler :: String -> String -> RequestHandler
 chessResultHandler uuid result req = do
@@ -182,7 +181,7 @@ robotsHandler = resourceHandler "robots.txt"
 
 genIndexHandler :: (FromJSON a) => String -> ([a] -> Html) -> RequestHandler
 genIndexHandler indexFile view req = do
-  d <- eitherDecode <$> cachedReadFile indexFile
+  d <- eitherDecode <$> cachedReadFile (isProduction req) indexFile
   case d of
    Left _ -> fourOhFourHandler req
    Right entries -> return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
@@ -190,11 +189,12 @@ genIndexHandler indexFile view req = do
 
 genStaticPageHandler :: String -> String -> RequestHandler
 genStaticPageHandler indexFile name req = do
-  d <- eitherDecode <$> cachedReadFile indexFile
+  d <- eitherDecode <$> cachedReadFile (isProduction req) indexFile
   case (lookupBlogEntry name d) of
    Nothing -> fourOhFourHandler req
    Just l -> do
-     c <- fmap decodeUtf8 $ cachedReadFile ("res/" ++ (T.unpack $ markdown_location l))
+     c <- fmap decodeUtf8 $ cachedReadFile (isProduction req)
+          ("res/" ++ (T.unpack $ markdown_location l))
      return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
        HR.renderHtml $ blogEntryView l c
 
@@ -215,3 +215,10 @@ staticPageHandler = genStaticPageHandler "res/pages.json"
 
 blogEntryHandler :: String -> RequestHandler
 blogEntryHandler = genStaticPageHandler "res/blog_entries.json"
+
+resumeHandler :: RequestHandler
+resumeHandler = genIndexHandler "res/conferences.json" resumeView
+
+--resumeHandler :: RequestHandler
+--resumeHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
+--                HR.renderHtml $ resumeView

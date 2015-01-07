@@ -113,11 +113,11 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
 }
 
 
-.talks-content p {
+.talks-content .talks-wrapper p {
     line-height: 1.6;
 }
 
-.talks-content a {
+.talks-wrapper a {
     text-decoration: none;
     color: #DD4814;
     font-weight: 300;

@@ -5,6 +5,7 @@ module Templates.Resume
         resumeInserts) where
 
 import Data.Monoid (mempty)
+import Data.List (intercalate)
 import Control.Monad (forM_)
 
 import Text.Blaze.Internal (preEscapedString)
@@ -12,7 +13,9 @@ import Text.Blaze.Html5
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
-import Templates.Partial (justified, justifiedLeader)
+import Data.Talk
+
+import Templates.Partial (justified, justifiedLeader, renderTalkRecord)
 
 resumeSection :: Html -> Html -> Html
 resumeSection t c = do
@@ -23,26 +26,52 @@ resumeParagraphs :: String -> Html
 resumeParagraphs ps = H.div ! A.class_ "resume-paragraphs" $
                       forM_ (Prelude.lines ps) (H.p . toHtml)
 
-resumeInserts :: [Html]
-resumeInserts =
-  [ resumeSection (h4 $ "Objective") $ (p
-    "To obtain a summer research position or internship\
-    \ in software engineering or data science."),
+relevantCoursesPhysics :: [String]
+relevantCoursesPhysics =
+  [ "Quantum Field Theory I",
+    "General Relativity",
+    "Low Temperature Physics Lab",
+    "Lasers Laboratory",
+    "Statistical Mechanics and Thermodynamics I + II",
+    "Hamiltonian Mechanics",
+    "Electricity and Magnetism",
+    "Quantum Mechanics",
+    "Introduction to Particle Physics",
+    "Introduction to Cosmology",
+    "Electrons and Photons" ]
+
+relevantCoursesMath :: [String]
+relevantCoursesMath =
+  [ "Graduate Algebra",
+    "Functional Analysis",
+    "Convex Optimization (Series)" ]
+
+relevantCoursesCS :: [String]
+relevantCoursesCS =
+  [ "Computer Organization and Systems",
+    "Algorithms",
+    "Optimization and Graduate Algorithms",
+    "Data Mining",
+    "Data Mining for Cyber Security",
+    "Linear Dynamical Systems",
+    "Convex Optimization (Series)" ]
+
+resumeInserts :: [TalkRecord] -> [Html]
+resumeInserts ts =
+  [ resumeSection (h4 $ "Objective") $
+    p "To obtain a research position in condensed matter physics.",
 
     resumeSection (h4 $ "Education") $ do
       justified (p $ i "Stanford University") (p "GPA 3.98/4.00")
       H.div $ p "Pursuing BS with Honors in Physics, theory concentration"
       H.div $ p "Expected June 2015",
 
-    resumeSection (h4 $ "Computer Skills") $ do
-      justified (p $ i "Proficient") (p "C{++}, Python, Clojure, UNIX, LaTeX")
-      justified (p $ i "Experienced") (p "Ruby, Haskell, HTML/CSS, JavaScript, \
-                                         \Mathematica/Matlab"),
+    resumeSection (h4 $ "Coursework") $ do
+      p $ toHtml $ (intercalate ", " relevantCoursesPhysics)
+      p $ toHtml $ (intercalate ", " relevantCoursesMath),
 
-    resumeSection (h4 $ "Coursework") $ (p
-      "Computer Organization and Systems, Algorithms, Optimization and Graduate \
-      \Algorithms, Data Mining, Data Mining for Cyber Security, Linear Dynamical \
-      \Systems, Convex Optimization (Series)"),
+    resumeSection (h4 $ "Talks") $ do
+      (mapM_ renderTalkRecord ts),
 
     resumeSection (h4 "Experience") $ do
       justifiedLeader (p $ do {b "Research Intern"; " SLAC National Laboratory" })
@@ -54,10 +83,9 @@ resumeInserts =
                        \learning techniques to jet finding and developed a \
                        \tagging scheme competitive with other state-of-the-art \
                        \techniques.\nMost recently, my research has been into \
-                       \using mixture modeling as a jet finding techinque. Aside \
-                       \from the physics, this has involved writing around 10k \
-                       \lines of algorithmic C++ to conduct and automate the \
-                       \analyses."
+                       \using mixture modeling as a jet finding techinque. I \
+                       \will be presenting an update on my research at an LHC \
+                       \workshop in February (see Talks)."
       justifiedLeader (p $ do {b "Data Analyst Intern"; " Mobile Posse" })
                       (p $ preEscapedString "June 2011 &ndash; September 2011")
       resumeParagraphs "Performed data analysis for a small startup to help \
@@ -80,6 +108,11 @@ resumeInserts =
                         \contact information, public documents, and papers. \
                         \You're looking at it! For the source please visit \
                         \/projects or my GitHub.",
+
+    resumeSection (h4 $ "Computer Skills") $ do
+      justified (p $ i "Proficient") (p "C{++}, Python, Clojure, UNIX, LaTeX")
+      justified (p $ i "Experienced") (p "Haskell, Ruby, HTML/CSS, JavaScript, \
+                                         \Mathematica/Matlab"),
     resumeSection (do
       h4 $ "Activities +"
       h4 $ "Interests")

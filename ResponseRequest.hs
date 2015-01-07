@@ -5,6 +5,7 @@ module ResponseRequest
        , processed
 
        , Request (Request)
+       , isProduction
        , ContentDescType (HTML,
                           PLAIN,
                           CSS,
@@ -54,6 +55,9 @@ data Request = Request { rtype :: RequestType,
                          path :: PathType,
                          serverConfig :: ConfigurationType,
                          options :: Map.Map String String } deriving (Show)
+
+isProduction :: Request -> Bool
+isProduction r = ((== Development) . envType . serverEnv . serverConfig) r
 
 data EncodingType = UNZIP | GZIP
 instance Show EncodingType where

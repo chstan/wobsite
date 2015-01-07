@@ -114,18 +114,19 @@ catView = docTypeHtml $ do
   H.head $ link ! A.href "/resource/style_test.css" ! A.rel "stylesheet"
   H.body $ img ! A.src  "/resource/kash.jpg"
 
-resumeContent :: Html
-resumeContent = do
+resumeContent :: [TalkRecord] -> Html
+resumeContent ts = do
   H.div ! A.id "content-header" $
     H.div ! A.id "resume-link" $
-      p $ do
-        "A pdf copy of the resume is also available for download "
-        a ! A.href "resource/resume.pdf" $ "here"
-        "."
-  resumeBuilder resumeInserts
+      mempty
+      --p $ do
+      --  "A pdf copy of the resume is also available for download "
+      --  a ! A.href "resource/resume.pdf" $ "here"
+      --  "."
+  resumeBuilder $ resumeInserts ts
 
-resumeView :: Html
-resumeView = standardPartial resumeContent
+resumeView :: [TalkRecord] -> Html
+resumeView ts = standardPartial $ resumeContent ts
 
 contactView :: Html
 contactView = standardPartial contactContent
