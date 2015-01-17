@@ -5,6 +5,10 @@ import ResponseRequest
 import Handlers
 import Routes
 
+import Aux(readPrefix)
+import Data.List (stripPrefix)
+import Safe (readMay)
+
 -- throw a random request at the router
 
 applicationRoutes :: Route RequestHandler
@@ -67,6 +71,13 @@ applicationRoutes =
               entryName <- capture $ return . id
               matchNone
               return $ blogEntryHandler entryName
+
+         , do match "exercise"
+              name <- capture $ return . id
+              weight <- fmap readMay $ capture $ stripPrefix "weight"
+              repetitions <- fmap readMay $ capture $ stripPrefix "repetitions"
+              sets <- fmap readMay $ capture $ stripPrefix "sets"
+              return $ gymDataHandler name weight repetitions sets
 
          , do match "static"
               entryName <- capture $ return . id

@@ -20,8 +20,13 @@ module Handlers
         blogIndexHandler,
         blogEntryHandler,
         staticPageHandler,
+        gymDataHandler,
         robotsHandler) where
 
+import Data.Time.LocalTime
+import Data.Time.Calendar
+import Data.Time.Clock (getCurrentTime)
+import Data.Time.Format
 import System.IO (hFlush)
 import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
@@ -32,7 +37,7 @@ import qualified Data.Text as T
 import Data.Text.Lazy.Encoding
 import qualified Data.ByteString.Char8 as BS8
 import qualified Data.ByteString.Lazy.Char8 as BSL8
-import Data.Aeson          (FromJSON, eitherDecode)
+import Data.Aeson          (FromJSON, eitherDecode, encode)
 import Control.Applicative ((<$>))
 
 import Data.TCache.Memoization (cachedByKey)
@@ -46,8 +51,11 @@ import Views.StaticViews
 import Views.BlogEntry
 import Views.Chess
 
+import Data.Gym
 import Data.Chess
 import Data.BlogEntry (lookupBlogEntry, markdown_location)
+
+import Aux (replaceChar)
 
 type RequestHandler = Request -> IO Response
 
@@ -157,11 +165,7 @@ computerChessHandler req
           Nothing -> jsonHandler (chessJSONView "" []) req
 
   where ProcessedPath pathElems = path(req)
-        replaceFENSpecialChars '_' = ' '
-        replaceFENSpecialChars '~' = '/'
-        replaceFENSpecialChars c = c
-
-        fenString = Prelude.map replaceFENSpecialChars rawFenString
+        fenString = replaceChar '~' '/' (replaceChar '_' ' ' rawFenString)
         (uuidString, rawFenString) = (pathElems !! 1, pathElems !! 2)
 
 chessHandler :: RequestHandler
@@ -219,6 +223,42 @@ blogEntryHandler = genStaticPageHandler "res/blog_entries.json"
 resumeHandler :: RequestHandler
 resumeHandler = genIndexHandler "res/conferences.json" resumeView
 
---resumeHandler :: RequestHandler
---resumeHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
---                HR.renderHtml $ resumeView
+gregorianTimeString :: IO String
+gregorianTimeString = do
+  (y, m, d) <- gregorianTime
+  return $ intercalate "-" $ fmap show [m, d] ++ [(show y)]
+
+gregorianTime :: IO (Integer, Int, Int)
+gregorianTime = do
+  now <- getCurrentTime
+  zone <- getTimeZone now
+  return $ toGregorian $ localDay $ zonedTimeToLocalTime $ utcToZonedTime zone now
+
+bodyWeightHandler :: Float -> RequestHandler
+bodyWeightHandler w req = do
+  let wf = "res/weight.json"
+  !a <- eitherDecode <$> BSL8.readFile wf
+  t <- gregorianTimeString
+  let updated = case (a :: Either String WeightMap) of
+        Left _ -> Map.singleton t $ Weight w
+        Right m -> Map.insert t (Weight w) m
+  BSL8.writeFile wf $ encode updated
+  jsonHandler "{}" req
+
+exerciseHandler :: String -> Maybe Float -> Int -> Int -> RequestHandler
+exerciseHandler n mw r s req = do
+  let wf = "res/gym_data.json"
+  !a <- eitherDecode <$> BSL8.readFile wf
+  t <- gregorianTimeString
+  let updated = case (a :: Either String ExerciseMap) of
+        Left _ -> Map.singleton t $ Map.singleton n (Exercise mw r s)
+        Right m -> case Map.lookup t m of
+          Nothing -> Map.insert t (Map.singleton n (Exercise mw r s)) m
+          Just inm -> Map.insert t (Map.insert n (Exercise mw r s) inm) m
+  BSL8.writeFile wf $ encode updated
+  jsonHandler "{}" req
+
+gymDataHandler :: String -> Maybe Float -> Maybe Int -> Maybe Int -> RequestHandler
+gymDataHandler "Weight" (Just w) Nothing Nothing = bodyWeightHandler w
+gymDataHandler n mw (Just r) (Just s) = exerciseHandler (replaceChar '_' ' ' n) mw r s
+gymDataHandler _ _ _ _ = fourOhFourHandler
