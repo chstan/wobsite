@@ -9,7 +9,8 @@ module Views.StaticViews
         talksAndPapersView,
         projectIndexView,
         booksView,
-        blogIndexView
+        blogIndexView,
+        exerciseFormView
         ) where
 
 import Data.UUID (UUID)
@@ -142,3 +143,20 @@ booksView bs = standardPartial $ booksContent bs
 
 blogIndexView :: [BlogListing] -> Html
 blogIndexView bs = standardPartial $ blogIndexContent bs
+
+renderTextField :: (String, String) -> Html
+renderTextField (l, s) = H.div $ do
+  p $ toHtml s
+  input ! A.type_ "text" ! A.name (H.toValue l) ! A.value ""
+
+exerciseFormContent :: Html
+exerciseFormContent = do
+  H.script ! A.src "http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" $ mempty
+  H.script ! A.src "/resource/js/gym_form.js" $ mempty
+  p $ "Please enter workout data for a single exercise."
+  mapM_ renderTextField [("name", "Exercise Name"), ("weight", "Weight"),
+                         ("repetitions", "Repetitions"), ("sets", "Sets")]
+  button ! A.type_ "button" ! A.id "submit" $ "Submit"
+
+exerciseFormView :: Html
+exerciseFormView = standardPartial $ exerciseFormContent

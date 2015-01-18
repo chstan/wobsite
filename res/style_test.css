@@ -112,6 +112,11 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
     margin-top: 70px;
 }
 
+button {
+  color: #222222;
+  background: rgba(0,0,0,0);
+  border: solid 1px #666666;
+}
 
 .talks-content .talks-wrapper p {
     line-height: 1.6;

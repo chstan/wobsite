@@ -73,6 +73,9 @@ applicationRoutes =
               return $ blogEntryHandler entryName
 
          , do match "exercise"
+              matchNone
+              return $ exerciseFormHandler
+         , do match "exercise"
               name <- capture $ return . id
               weight <- fmap readMay $ capture $ stripPrefix "weight"
               repetitions <- fmap readMay $ capture $ stripPrefix "repetitions"

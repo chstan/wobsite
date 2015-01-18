@@ -21,6 +21,7 @@ module Handlers
         blogEntryHandler,
         staticPageHandler,
         gymDataHandler,
+        exerciseFormHandler,
         robotsHandler) where
 
 import Data.Time.LocalTime
@@ -265,3 +266,7 @@ gymDataHandler :: String -> Maybe Float -> Maybe Int -> Maybe Int -> RequestHand
 gymDataHandler "Weight" (Just w) Nothing Nothing = bodyWeightHandler w
 gymDataHandler n mw (Just r) (Just s) = exerciseHandler (replaceChar '_' ' ' n) mw r s
 gymDataHandler _ _ _ _ = fourOhFourHandler
+
+exerciseFormHandler :: RequestHandler
+exerciseFormHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
+                        HR.renderHtml $ exerciseFormView
