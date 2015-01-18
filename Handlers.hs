@@ -46,7 +46,7 @@ import Text.Blaze.Html (Html)
 import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 
 import ResponseRequest
-import Data.Config (engineHandles, serverEnv, engineCommand, engineRecordPath)
+import Data.Config (dataPath, engineHandles, serverEnv, engineCommand, engineRecordPath)
 import Views.StaticViews
 import Views.BlogEntry
 import Views.Chess
@@ -236,7 +236,8 @@ gregorianTime = do
 
 bodyWeightHandler :: Float -> RequestHandler
 bodyWeightHandler w req = do
-  let wf = "res/weight.json"
+  let d = (dataPath $ serverEnv $ serverConfig req)
+  let wf = d ++ "weight.json"
   !a <- eitherDecode <$> BSL8.readFile wf
   t <- gregorianTimeString
   let updated = case (a :: Either String WeightMap) of
@@ -247,7 +248,9 @@ bodyWeightHandler w req = do
 
 exerciseHandler :: String -> Maybe Float -> Int -> Int -> RequestHandler
 exerciseHandler n mw r s req = do
-  let wf = "res/gym_data.json"
+  let d = (dataPath $ serverEnv $ serverConfig req)
+  let wf = d ++ "gym_data.json"
+
   !a <- eitherDecode <$> BSL8.readFile wf
   t <- gregorianTimeString
   let updated = case (a :: Either String ExerciseMap) of
