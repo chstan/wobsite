@@ -7,7 +7,6 @@ module Handlers
         fourOhFourHandler,
         talksAndPapersHandler,
         resourceHandler,
-        tmpResourceHandler,
         indexHandler,
         resumeHandler,
         echoHandler,
@@ -22,6 +21,8 @@ module Handlers
         staticPageHandler,
         gymDataHandler,
         exerciseFormHandler,
+        exerciseGraphHandler,
+        exerciseDataRetrievalHandler,
         robotsHandler) where
 
 import Data.Time.LocalTime
@@ -81,12 +82,6 @@ fileHandler s r = do
   contents <- cachedReadFile (isProduction r) s
   return $ Response "HTTP/1.1" 200 UNZIP (inferContentDescType s)
     (Cacheable []) contents
-
-tmpResourceHandler :: RequestHandler
-tmpResourceHandler req =
-  resourceHandler resource req
-  where resource = Data.List.intercalate "/" (Prelude.tail fragments)
-        ProcessedPath fragments = path(req)
 
 resourceHandler :: String -> RequestHandler
 resourceHandler s = fileHandler ("res/" ++ s)
@@ -270,3 +265,26 @@ gymDataHandler _ _ _ _ = fourOhFourHandler
 exerciseFormHandler :: RequestHandler
 exerciseFormHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
                         HR.renderHtml $ exerciseFormView
+
+exerciseGraphHandler :: RequestHandler
+exerciseGraphHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $
+                         HR.renderHtml $ exerciseGraphView
+
+
+exerciseDataRetrievalHandler :: String -> RequestHandler
+exerciseDataRetrievalHandler "Weight" req = do
+  let d = (dataPath $ serverEnv $ serverConfig req)
+      wf = d ++ "weight.json"
+  !a <- BSL8.readFile wf
+  jsonHandler (BSL8.unpack a) req
+exerciseDataRetrievalHandler n req = do
+  let d = (dataPath $ serverEnv $ serverConfig req)
+      wf = d ++ "gym_data.json"
+      repn = replaceChar '_' ' ' n
+  !a <- eitherDecode <$> BSL8.readFile wf
+  case (a :: Either String ExerciseMap) of
+   Left _ -> jsonHandler "{}" req
+   Right m -> do
+     let fm = Map.filter (Map.member repn) m
+         ffm = Map.map (Map.! repn) fm
+     jsonHandler (BSL8.unpack $ encode ffm) req

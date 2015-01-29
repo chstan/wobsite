@@ -128,7 +128,6 @@ instance Show Response where
               "Content-Length: " ++ show(BSL8.length $ body resp) ++ "\r\n" ++
               "Content-Encoding: " ++ show(encoding resp) ++ "\r\n" ++
               show(cachingInfo resp) ++
-              "Connection: close" ++ "\r\n" ++
               "\r\n" ++ (unpack $ body resp) ++ "\r\n"
 
 setCaching :: Response -> Response

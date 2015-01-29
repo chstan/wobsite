@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns #-}
 import qualified Data.ByteString.Lazy.Char8 as BSL8
 
 import Control.Monad (liftM)
@@ -6,8 +7,9 @@ import Control.Monad (liftM)
 import qualified Data.Map as Map
 import Network hiding (accept)
 import Network.Socket
-import Network.Socket.ByteString.Lazy as NSBL (getContents, sendAll)
+import Network.Socket.ByteString.Lazy as NSBL (getContents, sendAll, recv)
 import Control.Concurrent
+import Control.Concurrent.Async (race)
 import Control.Concurrent.STM
 import Data.List.Split (splitOn)
 
@@ -46,20 +48,42 @@ parseOptionsHelper (f:xs) acc
 parseOptions :: [BSL8.ByteString] -> Map.Map String String
 parseOptions l = Map.fromList $ parseOptionsHelper l []
 
-parseRequest :: ConfigurationType -> [BSL8.ByteString] -> Request
+parseRequest :: ConfigurationType -> [BSL8.ByteString] -> Maybe Request
+parseRequest config [] = Nothing
 parseRequest config l = case (BSL8.words (head l)) of
   -- Should really do some additional validation of the request
   [recvType, recvPath, _] ->
-    Request (parseRequestType recvType)
-            (RawPath $ BSL8.unpack recvPath)
-             config
-            (parseOptions (tail l))
+    Just $ Request (parseRequestType recvType)
+           (RawPath $ BSL8.unpack recvPath)
+            config
+           (parseOptions (tail l))
 
 connectionAccept :: Socket -> ConfigurationType -> IO ()
 connectionAccept c config = do
-  request <- fmap ((parseRequest config) . BSL8.lines) (NSBL.getContents c)
-  respond request c
-  return ()
+  readable <- isReadable c
+  case readable of
+   False -> return ()
+   True -> do
+     d <- race
+        (do
+            threadDelay 1000000
+            return ())
+        (do
+            contents <- NSBL.recv c 16392
+            return contents)
+     case d of
+      Left () -> do
+        return () -- close the conn
+      Right bytes -> do
+        let mrequest = ((parseRequest config) . BSL8.lines) bytes
+        case mrequest of
+         Nothing -> return ()
+         Just request -> do
+           respond request c
+           case Map.lookup "Connection" $ options request of
+            Just "keep-alive" -> connectionAccept c config
+            Nothing           -> connectionAccept c config
+            Just _            -> return ()
 
 welcomeMessage :: (Show a, Num a) => a -> IO ()
 welcomeMessage pn = do
@@ -91,4 +115,7 @@ loop sock config = do
   where
    daemon c conf = do
        connectionAccept c conf
-       Network.Socket.sClose c
+       state <- isConnected c
+       case state of
+        True -> Network.Socket.sClose c
+        _ -> return ()

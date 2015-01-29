@@ -5,11 +5,29 @@ import ResponseRequest
 import Handlers
 import Routes
 
+import qualified Data.Map as Map
 import Aux(readPrefix)
-import Data.List (stripPrefix)
+import Data.List (stripPrefix, intercalate)
 import Safe (readMay)
 
 -- throw a random request at the router
+
+collectMap :: (String -> Maybe a) -> Route (Map.Map String a)
+collectMap g = f Map.empty
+  where f m = choice [ do k <- capture $ return . id
+                          v <- capture g
+                          f $ Map.insert k v m
+                      , do matchNone
+                           return m
+                      , zero
+                      ]
+
+collectStrings :: Route [String]
+collectStrings = f []
+  where f xs = choice [ do s <- capture $ return . id
+                           f $ xs ++ [s]
+                      , return xs
+                      ]
 
 applicationRoutes :: Route RequestHandler
 applicationRoutes =
@@ -42,11 +60,8 @@ applicationRoutes =
               return computerChessHandler
 
          , do match "resource"
-              return $ tmpResourceHandler -- please forgive me
-
-         , do match "resource"
-              resourceLocation <- capture $ return . id
-              return $ resourceHandler resourceLocation
+              ss <- collectStrings
+              return $ resourceHandler $ intercalate "/" ss
 
          , do match "contact"
               return contactHandler
@@ -73,14 +88,20 @@ applicationRoutes =
               return $ blogEntryHandler entryName
 
          , do match "exercise"
-              matchNone
-              return $ exerciseFormHandler
-         , do match "exercise"
-              name <- capture $ return . id
-              weight <- fmap readMay $ capture $ stripPrefix "weight"
-              repetitions <- fmap readMay $ capture $ stripPrefix "repetitions"
-              sets <- fmap readMay $ capture $ stripPrefix "sets"
-              return $ gymDataHandler name weight repetitions sets
+              choice [ do matchNone
+                          return $ exerciseFormHandler
+                     , do match "graph"
+                          matchNone
+                          return exerciseGraphHandler
+                     , do match "data"
+                          dataset <- capture $ return . id
+                          return $ exerciseDataRetrievalHandler dataset
+                     , do name <- capture $ return . id
+                          weight <- fmap readMay $ capture $ stripPrefix "weight"
+                          repetitions <- fmap readMay $ capture $ stripPrefix "repetitions"
+                          sets <- fmap readMay $ capture $ stripPrefix "sets"
+                          return $ gymDataHandler name weight repetitions sets
+                     ]
 
          , do match "static"
               entryName <- capture $ return . id

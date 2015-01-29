@@ -10,7 +10,8 @@ module Views.StaticViews
         projectIndexView,
         booksView,
         blogIndexView,
-        exerciseFormView
+        exerciseFormView,
+        exerciseGraphView
         ) where
 
 import Data.UUID (UUID)
@@ -160,3 +161,16 @@ exerciseFormContent = do
 
 exerciseFormView :: Html
 exerciseFormView = standardPartial $ exerciseFormContent
+
+exerciseGraphContent :: Html
+exerciseGraphContent = do
+  H.script ! A.src "http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" $ mempty
+  H.script ! A.src "/resource/js/exercise_graph.js" $ mempty
+  H.script ! A.src "http://d3js.org/d3.v3.js" $ mempty
+  p $ "Enter a dataset name to get graphing."
+  mapM_ renderTextField [("name", "Exercise Name")]
+  button ! A.type_ "button" ! A.id "submit" $ "Submit"
+  H.div ! A.class_ "graph-region" $ mempty
+
+exerciseGraphView :: Html
+exerciseGraphView = standardPartial $ exerciseGraphContent
