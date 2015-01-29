@@ -1,7 +1,26 @@
-function d3plot(data) {
+function d3plot(idata) {
+    var data = [];
+    var t;
+
+    for (var elem in idata) {
+        t = idata[elem];
+        t.date = elem;
+        data.push(t);
+    }
+
+    function comp(a, b) {
+        if (a.date < b.date)
+            return -1;
+        if (a.date > b.date)
+            return 1;
+        return 0;
+    }
+    data.sort(comp);
+
     $( ".graph-region" ).empty();
-    var is_weight_graph = ("body_weight" in data[Object.keys(data)[0]]);
-    var is_bodyweight_ex_graph = !is_weight_graph && (data[Object.keys(data)[0]]["weight"] == null);
+    var is_weight_graph = ("body_weight" in idata[Object.keys(idata)[0]]);
+    var is_bodyweight_ex_graph = !is_weight_graph && (idata[Object.keys(idata)[0]]["weight"] == null);
+
     var margin = {top: 20, right: 20, bottom: 30, left: 50},
         width = 600 - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom;
@@ -37,9 +56,10 @@ function d3plot(data) {
     var min_x = Infinity, max_x = -Infinity;
     var min_y = Infinity, max_y = -Infinity;
 
-    $.each(data, function(key, value) {
+    $.each(data, function(i) {
+        value = data[i];
         if (is_weight_graph || is_bodyweight_ex_graph) {
-            temp = parseDate(key);
+            temp = parseDate(value.date);
         } else {
             temp = value.weight;
         }
@@ -63,19 +83,19 @@ function d3plot(data) {
     var line = d3.svg.line()
         .x(function(d) {
             if (is_weight_graph || is_bodyweight_ex_graph) {
-                return x(parseDate(d.key));
+                return x(parseDate(d.date));
             }
-            return x(d.value.weight);
+            return x(d.weight);
         })
         .y(function(d) {
             if (is_weight_graph) {
-                return y(d.value.body_weight);
+                return y(d.body_weight);
             }
-            return y(d.value.repetitions * d.value.sets);
+            return y(d.repetitions * d.sets);
         })
         .interpolate("basis");
 
-    svg.selectAll("path").data([d3.entries(data)]).enter().append("path")
+    svg.selectAll("path").data([data]).enter().append("path")
         .attr("class", "line")
         .attr("d", line);
 
@@ -123,7 +143,6 @@ $(document).ready(function(){
         if (n) {
             var submissionURL = '/exercise/data/' + n
             $.getJSON(submissionURL, function(data, textStatus, jqXHR){
-                console.log(data);
                 d3plot(data);
             });
         }
