@@ -28,6 +28,15 @@ bookReadDate :: Bool -> Text -> Html
 bookReadDate False _ = p $ preEscapedString "&mdash;"
 bookReadDate _ d = p $ toHtml d
 
+talkLink :: Text -> Html
+talkLink "#" =
+  a $ "[upcoming]"
+talkLink l
+  | Data.Text.head l == '/' = a ! A.href (H.toValue l) $ "[slides]"
+  | otherwise = a ! A.href (H.toValue (Data.Text.concat ["/resource/", l]))
+                  $ "[slides]"
+
+
 renderTalkRecord :: TalkRecord -> Html
 renderTalkRecord
   (TalkRecord tName tDate tLocation tPresentationTitle tPresentationURL _) = do
@@ -36,8 +45,7 @@ renderTalkRecord
         strong $ toHtml (" " ++ (unpack tPresentationTitle))
         toHtml $ " at " ++ (unpack tName) ++ ", " ++ (unpack tLocation) ++
                  ", " ++ (unpack tDate) ++ ".  "
-        --a ! A.href (H.toValue tPresentationURL) $ "[forthcoming]"
-        a $ "[upcoming]"
+        talkLink tPresentationURL
 
 renderBookRecord :: BookRecord -> Html
 renderBookRecord
