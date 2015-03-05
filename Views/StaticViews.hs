@@ -6,6 +6,7 @@ module Views.StaticViews
         indexView,
         contactView,
         chessView,
+        schemeView,
         talksAndPapersView,
         projectIndexView,
         booksView,
@@ -107,6 +108,22 @@ chessContent uuid mr = do
   H.script ! A.src "/resource/js/chess.js" $ mempty
   H.script $ toHtml $ "var uuid = \"" ++ (show uuid) ++ "\";"
   --H.script $ "var uuid = \"test\";"
+
+schemeContent :: Html
+schemeContent = do
+  H.div ! A.id "content-header" $
+    H.div ! A.id "resume-link" $ do
+      p "Here's a small Scheme interpreter in C. It's functional, but not quite complete."
+      p "If you are persistent enough to crash it (a very possible outcome), I would be happy if you let me know!"
+  H.div ! A.id "scheme-interpreter" $ mempty
+  link ! A.href "/resource/css/scheme-interpreter.css" ! A.rel "stylesheet"
+  H.script ! A.src "http://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js" $ mempty
+  H.script ! A.src "http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" $ mempty
+  H.script ! A.src "/resource/js/jquery.console.js" $ mempty
+  H.script ! A.src "/resource/js/schemer.js" $ mempty
+
+schemeView :: Html
+schemeView = standardPartial $ schemeContent
 
 chessView :: UUID -> Maybe GameRecord -> Html
 chessView uuid mr = standardPartial $ chessContent uuid mr

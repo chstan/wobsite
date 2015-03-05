@@ -1,13 +1,29 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Middleware
        ( breakPath
        , compressResponse
-       , cacheImages) where
+       , cacheImages
+       , breakQueryString) where
 
 import qualified Data.Map as Map
 import Data.List.Split   (splitOn)
 import qualified Codec.Compression.GZip as GZip
+import Network.HTTP.Types.URI (urlDecode)
+import qualified Data.ByteString.Char8 as BS8
 
 import ResponseRequest
+
+breakQueryString :: Request -> Request
+breakQueryString req = case path(req) of
+  ProcessedPath _ -> req -- improper use pattern
+  RawPath p -> case length (splitOn "?" p) of
+    2 -> req {path = RawPath actualPath,
+              queryParameters = Map.fromList $ zip argVars argVals }
+    _ -> req
+    where argVals = map (BS8.unpack . (urlDecode True) . BS8.pack . head . tail) argPairs
+          argVars = map head argPairs
+          argPairs = map (splitOn "=") $ splitOn "&" queryArgs
+          actualPath:queryArgs:[] = splitOn "?" p
 
 breakPath :: Request -> Request
 breakPath req = case path(req) of

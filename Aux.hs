@@ -7,7 +7,8 @@ module Aux
         dummyParam,
         nMinutesFromNow,
         readPrefix,
-        replaceChar
+        replaceChar,
+        dropPrefix
         ) where
 
 
@@ -50,3 +51,8 @@ replaceChar o n s = fmap repl s
   where repl c = case c == o of
           True -> n
           False -> c
+
+dropPrefix :: String -> String -> String
+dropPrefix prefix str = case isPrefixOf prefix str of
+  False -> str
+  True -> drop (length prefix) str

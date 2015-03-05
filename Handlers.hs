@@ -11,6 +11,8 @@ module Handlers
         resumeHandler,
         echoHandler,
         chessHandler,
+        schemeHandler,
+        schemeEvalHandler,
         computerChessHandler,
         chessResultHandler,
         catHandler,
@@ -18,6 +20,7 @@ module Handlers
         booksHandler,
         blogIndexHandler,
         blogEntryHandler,
+        genUUIDHandler,
         staticPageHandler,
         gymDataHandler,
         exerciseFormHandler,
@@ -27,6 +30,7 @@ module Handlers
 
 import Data.Time.LocalTime
 import Data.Time.Calendar
+import Safe (atMay)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format
 import System.IO (hFlush)
@@ -48,16 +52,19 @@ import Text.Blaze.Html (Html)
 import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 
 import ResponseRequest
-import Data.Config (dataPath, engineHandles, serverEnv, engineCommand, engineRecordPath)
+import Data.Config (engineHandles, serverEnv, ServerEnvironment(..))
 import Views.StaticViews
 import Views.BlogEntry
 import Views.Chess
+import Views.Scheme
 
 import Data.Gym
 import Data.Chess
+import Data.Scheme
+import Data.Queryable
 import Data.BlogEntry (lookupBlogEntry, markdown_location)
 
-import Aux (replaceChar)
+import Aux (replaceChar, dropPrefix)
 
 type RequestHandler = Request -> IO Response
 
@@ -124,23 +131,55 @@ chessResultHandler uuid result req = do
 
   where handles = engineHandles $ serverConfig req
 
+schemeEvalHandler :: RequestHandler
+schemeEvalHandler req = do
+  case sequence [Map.lookup "uuid" (queryParameters req),
+                 Map.lookup "exp"  (queryParameters req)] of
+   Nothing -> fourOhFourHandler req
+   Just (uuid:exp:[]) -> do
+     schemeHandle <- createOrFindQueryable (schemeCommand $ serverEnv $ serverConfig req)
+                     [] uuid killScheme (const $ return ()) (engineHandles $ serverConfig req)
+     case queryableState schemeHandle of
+      IDLE -> do
+        atomically $ modifyTVar (engineHandles $ serverConfig req)
+          $ Map.adjust (setQueryableState RUNNING) uuid
+        BSL8.hPutStrLn (queryableStdIn schemeHandle) (BSL8.pack $ (exp))
+        hFlush (queryableStdIn schemeHandle)
+        jsonHandler (schemeJSONView []) req
+      RUNNING -> do
+        let ls = unprocessedLines schemeHandle
+        case ls of
+         [] -> do
+           jsonHandler (schemeJSONView []) req
+         nels -> do
+           atomically $ do
+              modifyTVar (engineHandles $ serverConfig req)
+                (Map.adjust clearQueryableLines uuid)
+              modifyTVar (engineHandles $ serverConfig req)
+                (Map.adjust (setQueryableState IDLE) uuid)
+           jsonHandler (schemeJSONView pls) req
+           where pls = fmap (dropPrefix "-> ") nels
+
+
 computerChessHandler :: RequestHandler
 computerChessHandler req
   | Prelude.length pathElems < 3 = jsonHandler (chessJSONView "" []) req
   | otherwise = do
-      engineHandle <- createOrFindEngine (engineCommand $ serverEnv $ serverConfig req)
-                      uuidString (engineHandles $ serverConfig req)
-      case engineState engineHandle of
+      engineHandle <- createOrFindQueryable (engineCommand $ serverEnv $ serverConfig req)
+                      (["--uci", "engine.log"])
+                      uuidString killEngine chessAfterCreation
+                      (engineHandles $ serverConfig req)
+      case queryableState engineHandle of
        --engine is not currently searching for a move
        --start it searching and change state to running
        --return no info for simplicity (will take some time
        --for the engine to search)
        IDLE -> do
          atomically $ modifyTVar (engineHandles $ serverConfig req)
-           (Map.adjust (setEngineState RUNNING) uuidString)
-         BSL8.hPutStrLn (engineStdIn engineHandle) (BSL8.pack $ "position fen " ++ fenString)
-         BSL8.hPutStrLn (engineStdIn engineHandle) (BSL8.pack $ "go wtime 120000 btime 120000 winc 0 binc 0")
-         hFlush (engineStdIn engineHandle)
+           (Map.adjust (setQueryableState RUNNING) uuidString)
+         BSL8.hPutStrLn (queryableStdIn engineHandle) (BSL8.pack $ "position fen " ++ fenString)
+         BSL8.hPutStrLn (queryableStdIn engineHandle) (BSL8.pack $ "go wtime 120000 btime 120000 winc 0 binc 0")
+         hFlush (queryableStdIn engineHandle)
          jsonHandler (chessJSONView "" []) req
 
        --engine is searching, don't write to the engine, just read from output
@@ -152,9 +191,9 @@ computerChessHandler req
           Just move -> do
             atomically $ do
               modifyTVar (engineHandles $ serverConfig req)
-                (Map.adjust clearEngineLines uuidString)
+                (Map.adjust clearQueryableLines uuidString)
               modifyTVar (engineHandles $ serverConfig req)
-                (Map.adjust (setEngineState IDLE) uuidString)
+                (Map.adjust (setQueryableState IDLE) uuidString)
             jsonHandler (chessJSONView move engineLines) req
 
           -- no move, ah well
@@ -163,6 +202,11 @@ computerChessHandler req
   where ProcessedPath pathElems = path(req)
         fenString = replaceChar '~' '/' (replaceChar '_' ' ' rawFenString)
         (uuidString, rawFenString) = (pathElems !! 1, pathElems !! 2)
+
+schemeHandler :: RequestHandler
+schemeHandler req = do
+  return $ Response "HTTP/1.1" 200 UNZIP HTML Dynamic $ HR.renderHtml $
+    schemeView
 
 chessHandler :: RequestHandler
 chessHandler req = do
@@ -288,3 +332,8 @@ exerciseDataRetrievalHandler n req = do
      let fm = Map.filter (Map.member repn) m
          ffm = Map.map (Map.! repn) fm
      jsonHandler (BSL8.unpack $ encode ffm) req
+
+genUUIDHandler :: RequestHandler
+genUUIDHandler req = do
+  uuid <- nextRandom
+  jsonHandler ("{\"uuid\":\"" ++ (show uuid) ++ "\"}") req

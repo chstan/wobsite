@@ -33,6 +33,7 @@ module ResponseRequest
        , serverConfig
        , options
        , version
+       , queryParameters
        , statuscode
        , encoding
        , cachingInfo
@@ -54,6 +55,7 @@ data RequestType = GET | POST | PUT | DELETE deriving (Show)
 data Request = Request { rtype :: RequestType,
                          path :: PathType,
                          serverConfig :: ConfigurationType,
+                         queryParameters :: Map.Map String String,
                          options :: Map.Map String String } deriving (Show)
 
 isProduction :: Request -> Bool

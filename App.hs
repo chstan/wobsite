@@ -50,11 +50,23 @@ applicationRoutes =
               matchNone
               return chessHandler
 
+         , do match "getUUID"
+              matchNone
+              return genUUIDHandler
+
+         , do match "eval"
+              matchNone
+              return schemeEvalHandler
+
          , do match "chess"
               match "result"
               uuid <- capture $ return . id
               result <- capture $ return . id
               return $ chessResultHandler uuid result
+
+         , do match "scheme"
+              matchNone
+              return schemeHandler
 
          , do match "chess"
               return computerChessHandler

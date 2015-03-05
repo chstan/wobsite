@@ -21,7 +21,8 @@ import Middleware
 
 appWithMiddleware :: Request -> IO Response
 appWithMiddleware req =
-  ((fmap cacheImages) . (liftM $ compressResponse req) . application . breakPath) req
+  ((fmap cacheImages) . (liftM $ compressResponse req) . application .
+   breakPath . breakQueryString) req
 
 respond :: Request -> Socket -> IO ()
 respond req c  = do
@@ -56,6 +57,7 @@ parseRequest config l = case (BSL8.words (head l)) of
     Just $ Request (parseRequestType recvType)
            (RawPath $ BSL8.unpack recvPath)
             config
+           (Map.fromList [])
            (parseOptions (tail l))
 
 connectionAccept :: Socket -> ConfigurationType -> IO ()
