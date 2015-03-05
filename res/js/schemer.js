@@ -31,6 +31,12 @@ schemeInterpreter.ajaxEval = function(line, report) {
             dataType: 'json',
             type: 'GET',
             data: args,
+            timeout: 3000,
+            error: function(jqXHR, status, errorThrown) {
+                if (status === "timeout") {
+                    setTimeout(pollForResult, 150);
+                }
+            },
             success: function(result) {
                 console.log(result);
                 if (result.status === "Invalidated UUID") {
@@ -38,7 +44,7 @@ schemeInterpreter.ajaxEval = function(line, report) {
                     schemeInterpreter.ajaxEval(line, report);
                 }
                 if (result.out === undefined) {
-                    setTimeout(pollForResult, 50);
+                    setTimeout(pollForResult, 500);
                 } else {
                     var msgs = result.out.map(function (s) {
                         return {msg:s,
