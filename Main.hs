@@ -50,7 +50,7 @@ parseOptions :: [BSL8.ByteString] -> Map.Map String String
 parseOptions l = Map.fromList $ parseOptionsHelper l []
 
 parseRequest :: ConfigurationType -> [BSL8.ByteString] -> Maybe Request
-parseRequest config [] = Nothing
+parseRequest _ [] = Nothing
 parseRequest config l = case (BSL8.words (head l)) of
   -- Should really do some additional validation of the request
   [recvType, recvPath, _] ->
@@ -60,6 +60,7 @@ parseRequest config l = case (BSL8.words (head l)) of
            (Map.fromList [])
            (parseOptions (tail l))
   _ -> Nothing
+parseRequest _ _ = Nothing
 
 connectionAccept :: Socket -> ConfigurationType -> IO ()
 connectionAccept c config = do
