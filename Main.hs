@@ -60,7 +60,6 @@ parseRequest config l = case (BSL8.words (head l)) of
            (Map.fromList [])
            (parseOptions (tail l))
   _ -> Nothing
-parseRequest _ _ = Nothing
 
 connectionAccept :: Socket -> ConfigurationType -> IO ()
 connectionAccept c config = do
