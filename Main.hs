@@ -7,6 +7,8 @@ import Control.Monad (liftM)
 import qualified Data.Map as Map
 import Network hiding (accept)
 import Network.Socket
+import System.IO (hClose)
+import Control.Exception (Exception, SomeException, finally, catch)
 import Network.Socket.ByteString.Lazy as NSBL (getContents, sendAll, recv)
 import Control.Concurrent
 import Control.Concurrent.Async (race)
@@ -102,6 +104,7 @@ main = withSocketsDo $ do
      welcomeMessage pn
      sock <- listenOn $ PortNumber $ fromIntegral pn
      setSocketOption sock KeepAlive 1
+     setSocketOption sock ReuseAddr 1
      let config = ConfigurationType sharedEngineHandles e
      loop sock config
 
@@ -114,12 +117,11 @@ main = withSocketsDo $ do
 loop :: Socket -> ConfigurationType -> IO ()
 loop sock config = do
    (connection,_) <- accept sock
-   forkIO $ daemon connection config
+   forkIO (catch
+            (finally
+             (connectionAccept connection config)
+             (Network.Socket.sClose connection)
+            )
+            (\x -> putStrLn $ show (x :: SomeException))
+          )
    loop sock config
-  where
-   daemon c conf = do
-       connectionAccept c conf
-       state <- isConnected c
-       case state of
-        True -> Network.Socket.sClose c
-        _ -> return ()

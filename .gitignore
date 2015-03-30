@@ -9,6 +9,9 @@ res/
 configuration
 config/
 
+# siege
+siege/
+
 # Large resources to be rsync-ed/scp-ed
 *.jpg
 *.pdf
