@@ -101,6 +101,7 @@ main = withSocketsDo $ do
      sharedEngineHandles <- atomically $ newTVar $ Map.fromList []
      welcomeMessage pn
      sock <- listenOn $ PortNumber $ fromIntegral pn
+     setSocketOption sock KeepAlive 1
      let config = ConfigurationType sharedEngineHandles e
      loop sock config
 
