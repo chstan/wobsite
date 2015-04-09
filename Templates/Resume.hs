@@ -57,8 +57,8 @@ relevantCoursesCS =
 
 resumeInserts :: [TalkRecord] -> [Html]
 resumeInserts ts =
-  [ resumeSection (h4 $ "Objective") $
-    p "To obtain a programming internship at Ginkgo Bioworks.",
+  [ --resumeSection (h4 $ "Objective") $
+    --p "To obtain a programming internship at Ginkgo Bioworks.",
 
     resumeSection (h4 $ "Education") $ do
       justified (p $ i "Stanford University") (p "GPA 4.00")
