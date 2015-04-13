@@ -42,9 +42,9 @@ relevantCoursesPhysics =
 
 relevantCoursesMath :: [String]
 relevantCoursesMath =
-  [ "Graduate Algebra",
+  [ "Graduate Algebra I + II",
     "Functional Analysis",
-    "Convex Optimization (Series)" ]
+    "Convex Optimization I + II" ]
 
 relevantCoursesCS :: [String]
 relevantCoursesCS =
@@ -62,68 +62,63 @@ resumeInserts ts =
 
     resumeSection (h4 $ "Education") $ do
       justified (p $ i "Stanford University") (p "GPA 4.00")
-      H.div $ p "Pursuing BS with Honors in Physics, theory concentration"
-      H.div $ p "Expected June 2015",
+      H.div $ p "Pursuing BS with Honors in Physics"
+      H.div $ p "To be conferred in June 2015",
 
     resumeSection (h4 $ "Coursework") $ do
       --p $ toHtml $ (intercalate ", " relevantCoursesPhysics)
       p $ toHtml $ (intercalate ", " relevantCoursesCS)
       p $ toHtml $ (intercalate ", " relevantCoursesMath),
 
+    resumeSection (h4 "Experience") $ do
+      justifiedLeader (p $ do {b "Research Intern"; " SLAC National Laboratory" })
+                      (p $ preEscapedString "June 2013 &ndash;")
+      resumeParagraphs "Working with the ATLAS group on two data analysis projects \
+                       \to improve the resolution of Large Hadron Collier \
+                       \experiments. Investigated several machine learning \
+                       \techniques for jet finding and developed a jet classifier \
+                       \competitive with state of the art.\nSince June 2014, \
+                       \researched model based clustering for jet finding. Wrote \
+                       \10k+ lines of algorithmic C++ to conduct and automate \
+                       \statistical analyses that handle TBs of data and generate \
+                       \plots and histograms to communicate results.",
+
+    resumeSection (h4 $ "Projects") $ do
+      justifiedLeader (p $ b $ "Chess Engine") mempty
+      resumeParagraphs  "Designed and built a chess engine in C to \
+                        \explore my hobby for chess and to understand how \
+                        \systems programming languages can be leveraged to build \
+                        \complex applications."
+      justifiedLeader (p $ b $ "Web Server") mempty
+      resumeParagraphs  "Created a web server from the \
+                        \ground up using Haskell + HTML5/CSS + JS to learn about \
+                        \web technologies in a holistic way and to host a website \
+                        \for completed and ongoing projects, research, \
+                        \contact information, public documents, and papers. \
+                        \You're looking at it!"
+      justifiedLeader (p $ b $ "FEA") mempty
+      resumeParagraphs  "Wrote a finite element analysis to learn about \
+                        \computational fluid dynamics and a Scheme interpreter \
+                        \to generate meshes and provide high level problem \
+                        \definitions to the solver.",
+
     resumeSection (h4 $ "Talks") $ do
       (mapM_ renderTalkRecord ts),
 
     resumeSection (h4 $ "Teaching") $ do
       justifiedLeader (p $ b $ "Scientific Computing in Python") mempty
-      resumeParagraphs "I am an instructor for Physics 91 SI, a one term course \
-                       \at Stanford aiming to teach natural science majors \
-                       \about Python and scientific computing as a research \
-                       \and communication tool. My responsibilities involve \
-                       \meeting with faculty to design and plan the curriculum, \
-                       \creating student resources, teaching the semiweekly \
-                       \lecture component of the course, and assessing student \
-                       \projects and labs.",
-
-
-    resumeSection (h4 "Experience") $ do
-      justifiedLeader (p $ do {b "Research Intern"; " SLAC National Laboratory" })
-                      (p $ preEscapedString "June 2013 &ndash;")
-      resumeParagraphs "I have worked with the ATLAS group at SLAC on two data \
-                       \analysis projects to improve resolution of experiments \
-                       \conducted at the LHC. From June 2013 to June 2014, \
-                       \I worked on investigating the applicability of machine \
-                       \learning techniques to jet finding and developed a \
-                       \tagging scheme competitive with other state-of-the-art \
-                       \techniques.\nMost recently, my research has been into \
-                       \using mixture modeling as a jet finding technique and to construct new jet variables. I \
-                       \recently presented an update on my research at the inaugural particle physics workshop at UC Berkeley's new center for experimental particle physics (see Talks).",
-
-      --justifiedLeader (p $ do {b "Data Analyst Intern"; " Mobile Posse" })
-      --                (p $ preEscapedString "June 2011 &ndash; September 2011")
-      --resumeParagraphs "Performed data analysis for a small startup to help \
-      --                 \them better understand customer turnover. Also proposed \
-      --                 \and designed an automated analysis and alert framework \
-      --                 \which would allow monitoring of their hundreds of \
-      --                 \different device platforms.",
-
-    resumeSection (h4 $ "Projects") $ do
-      justifiedLeader (p $ b $ "Chess Engine") mempty
-      resumeParagraphs  "I designed and built a chess engine in C as a way of \
-                        \exploring my hobby for chess and understanding how \
-                        \systems level languages can be leveraged to build \
-                        \complex applications."
-      justifiedLeader (p $ b $ "Web Server") mempty
-      resumeParagraphs  "I have an ongoing project to write a web server from the \
-                        \ground up using Haskell + HTML5/CSS + JS to learn about \
-                        \web technologies in a holistic way and to host a website \
-                        \for completed and ongoing projects, research, \
-                        \contact information, public documents, and papers. \
-                        \You're looking at it! For the source please visit \
-                        \/projects or my GitHub.",
+      resumeParagraphs "Lecturing Physics 91SI, a one term course at Stanford \
+                       \aiming to teach natural science majors about Python, \
+                       \Unix, and scientific computing as a tool for data \
+                       \analysis, research, and communication. Met with faculty \
+                       \to design and plan the curriculum, created student \
+                       \resources and lectures, taught the semiweekly lecture \
+                       \component of the course, and assessed student projects and \
+                       \labs.",
 
     resumeSection (h4 $ "Computer Skills") $ do
-      justified (p $ i "Proficient") (p "C{++}, Python, Clojure, UNIX, LaTeX")
-      justified (p $ i "Experienced") (p "Haskell, Ruby, HTML/CSS, JavaScript, \
+      justified (p $ i "Proficient") (p "C{++}, Python, Clojure, UNIX, LaTeX, Haskell, ROOT")
+      justified (p $ i "Experienced") (p "Ruby, HTML/CSS, JavaScript, \
                                          \Mathematica/Matlab"),
     resumeSection (do
       h4 $ "Activities +"
