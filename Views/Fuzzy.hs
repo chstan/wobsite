@@ -15,7 +15,7 @@ import Prelude hiding (div, span)
 
 import Text.Blaze.Html5 hiding (map, style)
 import Text.Blaze.Html5.Attributes hiding (span)
-import Text.Blaze.Internal (preEscapedString)
+import Text.Blaze.Internal (preEscapedString, stringValue)
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
 
