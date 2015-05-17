@@ -35,7 +35,7 @@ executable WebServer
                      , monad-loops >= 0.4.2
                      , mtl >= 2.2.1
                      , network >= 2.5.0.0
-                     , old-locale >= 1.0.0.6
+                     , old-locale >= 1.0.0.5
                      , operational >= 0.2.3.2
                      , parsec >= 3.1.7
                      , pretty >= 1.1.1.0
