@@ -58,6 +58,14 @@ applicationRoutes =
               matchNone
               return schemeEvalHandler
 
+         , do match "fuzzy_talk"
+              matchNone
+              return fuzzyTalkHandler
+
+         , do match "plotly"
+              matchNone
+              return plotlyHandler
+
          , do match "chess"
               match "result"
               uuid <- capture $ return . id
@@ -126,6 +134,7 @@ applicationRoutes =
 
 application :: Request -> IO Response
 application req = do
+  putStrLn $ show req
   let ProcessedPath p = path(req)
   let h = runRoute applicationRoutes p
   response <- case h of

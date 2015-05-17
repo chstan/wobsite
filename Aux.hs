@@ -8,7 +8,8 @@ module Aux
         nMinutesFromNow,
         readPrefix,
         replaceChar,
-        dropPrefix
+        dropPrefix,
+        englishJoin
         ) where
 
 
@@ -19,6 +20,13 @@ import Data.List
 import Data.Time.Clock
 import Data.Time.Lens
 import Safe (readMay)
+
+englishJoin :: [String] -> String
+englishJoin [] = ""
+englishJoin (x:[]) = x
+englishJoin (x:y:[]) = x ++ " and " ++ y
+englishJoin (x:y:z:[]) = x ++ ", " ++ y ++ ", and " ++ z
+englishJoin (x:xs) = x ++ ", " ++ (englishJoin xs)
 
 pairFn :: (a -> b) -> (a -> c) -> a -> (b, c)
 pairFn fn1 fn2 el =

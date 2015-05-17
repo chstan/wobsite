@@ -47,7 +47,6 @@ parseOptionsHelper (f:xs) acc
   option = reverse . tail . reverse . head . words $ BSL8.unpack f
   value = unwords . tail . words $ BSL8.unpack f
   builtOption = (option, value)
-
 parseOptions :: [BSL8.ByteString] -> Map.Map String String
 parseOptions l = Map.fromList $ parseOptionsHelper l []
 
@@ -90,10 +89,14 @@ connectionAccept c config = do
             Nothing           -> connectionAccept c config
             Just _            -> return ()
 
-welcomeMessage :: (Show a, Num a) => a -> IO ()
-welcomeMessage pn = do
+welcomeMessage :: (Show a, Num a) => ServerEnvironment -> a -> IO ()
+welcomeMessage e pn = do
   putStrLn "Server is starting up..."
   putStrLn $ "Preparing to serve requests on " ++ (show pn)
+  case envType e of
+   Production -> putStrLn "PRODUCTION SERVER"
+   Development -> putStrLn "DEV SERVER"
+
 
 main :: IO ()
 main = withSocketsDo $ do
@@ -101,7 +104,7 @@ main = withSocketsDo $ do
   case envAndPortFromLines contents of
    (Just e, Just pn) -> do
      sharedEngineHandles <- atomically $ newTVar $ Map.fromList []
-     welcomeMessage pn
+     welcomeMessage e pn
      sock <- listenOn $ PortNumber $ fromIntegral pn
      setSocketOption sock KeepAlive 1
      setSocketOption sock ReuseAddr 1

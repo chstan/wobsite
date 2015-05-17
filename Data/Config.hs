@@ -29,4 +29,5 @@ data ConfigurationType =
   ConfigurationType { engineHandles :: TVar (Map.Map String QueryableHandle),
                       serverEnv :: ServerEnvironment }
 
-instance Show ConfigurationType where show _ = ""
+instance Show ConfigurationType where
+  show ct = show $ serverEnv ct

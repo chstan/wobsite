@@ -26,6 +26,8 @@ module Handlers
         exerciseFormHandler,
         exerciseGraphHandler,
         exerciseDataRetrievalHandler,
+        plotlyHandler,
+        fuzzyTalkHandler,
         robotsHandler) where
 
 import Data.Time.LocalTime
@@ -54,6 +56,8 @@ import qualified Text.Blaze.Html.Renderer.Utf8 as HR
 import ResponseRequest
 import Data.Config (engineHandles, serverEnv, ServerEnvironment(..))
 import Views.StaticViews
+import Views.Plotly
+import Views.Fuzzy
 import Views.BlogEntry
 import Views.Chess
 import Views.Scheme
@@ -88,10 +92,21 @@ fileHandler :: String -> RequestHandler
 fileHandler s r = do
   contents <- cachedReadFile (isProduction r) s
   return $ Response "HTTP/1.1" 200 UNZIP (inferContentDescType s)
-    (Cacheable []) contents
+    cache_settings contents
+  where cache_settings = case (isProduction r) of
+          True -> Cacheable []
+          False -> Dynamic
 
 resourceHandler :: String -> RequestHandler
 resourceHandler s = fileHandler ("res/" ++ s)
+
+fuzzyTalkHandler :: RequestHandler
+fuzzyTalkHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML Dynamic $
+                     HR.renderHtml $ fuzzyTalkView
+
+plotlyHandler :: RequestHandler
+plotlyHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML Dynamic $
+                  HR.renderHtml $ plotlyView
 
 indexHandler :: RequestHandler
 indexHandler _ = return $ Response "HTTP/1.1" 200 UNZIP HTML (Cacheable []) $

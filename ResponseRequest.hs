@@ -59,7 +59,7 @@ data Request = Request { rtype :: RequestType,
                          options :: Map.Map String String } deriving (Show)
 
 isProduction :: Request -> Bool
-isProduction r = ((== Development) . envType . serverEnv . serverConfig) r
+isProduction r = ((== Production) . envType . serverEnv . serverConfig) r
 
 data EncodingType = UNZIP | GZIP
 instance Show EncodingType where
