@@ -12,6 +12,7 @@ import Data.Time.Format
 import Aux (englishJoin)
 
 import Text.Blaze.Html5
+import Text.Blaze (stringValue)
 import Text.Blaze.Internal (preEscapedString)
 import qualified Text.Blaze.Html5 as H
 import qualified Text.Blaze.Html5.Attributes as A
