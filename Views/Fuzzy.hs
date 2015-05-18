@@ -77,31 +77,64 @@ seqRSlide = slide $ do
     p ! right $ "distance metrics measure similarity"
     div ! center ! width "auto" ! style "overflow: hidden; white-space: nowrap;" $ do
       div ! style "vertical-align: middle; margin-right: 50px; display: inline-block;" $ do
-        displayMath "d_{ij}, "
+        displayMath "d_{ij}"
         p ! class_ "fragment" $ "between particles"
 
       div ! style "vertical-align: middle; margin-right: 50px; display: inline-block;" $ do
         displayMath "d_{iB}"
         p ! class_ "fragment" $ "to beam axis"
 
-seqRContinuedSlide = slide $ do
-  h3 ! left $ "Sequential Recombination"
+kinematicsBackgroundSlide = slide $ do
+  h3 ! left $ "Kinematics Interlude"
 
-  p ! center ! class_ "fragment" $ do
-    "repeatedly combine close particles: "
+  fadeIn 1 $ div $ do
+    p "Particles are 4-vectors:"
+    p $ do
+      span ! style "margin-right: 10px;" $ inlineMathColored "green" "\\vec{X}"
+      span ! style "margin-right: 10px;" $ inlineMathColored "black" "\\equiv"
+      inlineMathColored "black" "("
+      inlineMathColored "green" "p_T"
+      inlineMathColored "black" ","
+      inlineMathColored "green" "\\vec{\\rho}"
+      inlineMathColored "black" ","
+      inlineMathColored "green" "E"
+      inlineMathColored "black" ")"
+  fadeIn 2 $ p $ do
+    inlineMathColored "green" "p_T"
+    inlineMathColored "black" "\\equiv"
+    " momentum perpendicular to beam"
+
+  fadeIn 3 $ p $ do
+    inlineMathColored "green" "\\vec{\\rho}"
+    inlineMathColored "black" "\\equiv"
+    " \"location\" in the calorimeter"
+
+  fadeIn 4 $ p $ do
+    "Distance "
     inlineMath "d_{ij}"
+    " a measure of spatial and momentum closeness"
 
-  p ! center ! class_ "fragment" $ do
-    "stop when close to beam axis: "
-    inlineMath "d_{iB}"
 
-  div ! center ! width "auto" ! style "overflow: hidden; white-space: nowrap;"
-      ! class_ "fragment" $ do
-        img ! height "200px" ! style "margin-right:50px;" ! (customAttribute "data-src" "resource/img/kt_example.png")
-        img ! height "200px" ! (customAttribute "data-src" "resource/img/antikt_example.png")
+seqRContinuedSlide = do
+  slide $ do
+    h3 ! left $ "Sequential Recombination"
 
-  p ! center ! class_ "fragment" $ do
-    "family of algorithms arising from choice of metrics"
+    div ! style "margin-top: 110px;" $ p ! center ! class_ "fragment" $ do
+      "repeatedly combine close particles: "
+      inlineMath "d_{ij}"
+
+    div ! style "margin-top: 100px;" $ p ! center ! class_ "fragment" $ do
+      "stop when close to beam axis: "
+      inlineMath "d_{iB}"
+
+  slide $ do
+    h3 ! left $ "Sequential Recombination"
+    div ! center ! width "auto" ! style "overflow: hidden; white-space: nowrap;"
+        ! class_ "fragment" $ do
+          img ! height "320px" ! style "margin-right:50px;" ! (customAttribute "data-src" "resource/img/kt_example.png")
+          img ! height "320px" ! (customAttribute "data-src" "resource/img/antikt_example.png")
+    p ! center ! class_ "fragment" $ do
+      "family of algorithms arising from choice of metrics"
 
 otherOptionsSlide = slide $ do
   h3 ! left $ "Other Options for Clustering"
@@ -174,7 +207,7 @@ mixtureModelingSlide = slide $ do
     fadeIn 1 $ span ! left $ do
       inlineMathColored "red" "\\Phi " ! style "margin-right: 20px;"
       inlineMathColored "black" " \\equiv" ! style "margin-right: 20px;"
-      "probability density"
+      "probability density (kernel)"
 
     fadeIn 2 $ span ! left $ do
       inlineMathColored "blue" "\\vec{\\theta}_j " ! style "margin-right: 20px;"
@@ -309,7 +342,7 @@ massTakeawaysSlide = do
     h3 "Kinematics Takeaways"
 
     div ! style "margin-top: 150px;" $ do
-      fadeIn 1 $ p "Fuzzy jets learns structural features of events"
+      fadeIn 1 $ p "Fuzzy jets learn structural features of events"
     div ! style "margin-top: 100px;" $ do
       fadeIn 2 $ p "Learning smaller features hampers kinematics"
 
@@ -387,6 +420,21 @@ pileupHistoSlide = slide $ do
   div $ do
     img ! style "margin-top:10px" ! width "600px"
       ! (customAttribute "data-src" "resource/img/pileup_histo.png")
+
+whyJetsSlides = do
+  slide $ do
+    h3 "Why Jets?"
+    div ! style "margin-top: 60px;" $ fadeIn 1 $ p "Explaining Higgs mass"
+    div ! style "margin-top: 40px;" $ fadeIn 2 $ p "Hierarchy problem"
+    div ! style "margin-top: 40px;" $ fadeIn 3 $ p "Dark matter"
+
+    div ! style "margin-top: 60px;" $ fadeIn 4 $ h4 "New particles at TeV scale?"
+
+  slide $ do
+    h3 "Why Jets?"
+
+    div ! style "margin-top: 90px;" $ p "EW heavy final states decay primarily to jets (partons)"
+    div ! style "margin-top: 80px;" $ fadeIn 1 $ p "Clustering + classifying jets crucial to addressing physics problems"
 
 sigmaIntroductionSlide = slide $ do
   h3 $ do
@@ -470,11 +518,15 @@ safetySlide = slide $ do
     inlineMathColored "blue" "\\vec{\\theta}_j"
     inlineMathColored "black" ")"
 
-  div ! style "margin-top:130px" $ do
+  div ! style "margin-top:100px" $ do
     span ! left $ do
       "Taking "
       inlineMathColored "black" "\\alpha = 1"
       " grants IRC safety"
+
+  div ! style "margin-top:60px" $ do
+    fadeInInline 1 $ span ! left $ do
+      "Fuzzy jets is IRC safe mixture modeling"
 
 emAlgSlide = slide $ do
   fadeIn 1 $ h3 "EM Algorithm"
@@ -519,7 +571,7 @@ eventDisplaySlides = do
 
   -- voronoi event display
   slide $ do
-    h3 "Voronoi Catchment Areas"
+    h3 "Fuzzy Jet Shapes"
     div ! center ! width "100%" ! style "margin: auto;" $ do
       div ! style "margin-right: 50px; float: left; width: 450px;" $ do
         img ! style "margin-top:100px" ! width "400px"
@@ -528,6 +580,17 @@ eventDisplaySlides = do
         div ! style "margin-top:50px;" $ small ! class_ "fragment" $ "Defined up to choice of assignment"
         div ! style "margin-top:50px;" $ small ! class_ "fragment" $ "Variety of shapes and sizes"
         div ! style "margin-top:50px;" $ small ! class_ "fragment" $ "Potentially unbounded areas"
+
+openQuestionsSlide = slide $ do
+  h3 "Future Work"
+
+  div ! style "margin-top: 50px;" $ fadeIn 1 $  "Get maximum information out of fuzzy jets?"
+
+  div ! style "margin-top: 50px;" $ fadeIn 2 $  "Better cluster initialization?"
+
+  div ! style "margin-top: 50px;" $ fadeIn 3 $  "Take into account particle correlations?"
+
+  div ! style "margin-top: 50px;" $ fadeIn 4 $  "Jet by jet grooming?"
 
 conclusionsSlide = slide $ do
   h3 "Wrap Up"
@@ -598,8 +661,10 @@ fuzzyTalkView = docTypeHtml $ do
       div ! class_ "slides" $ do
         titleSlide
         introductionSlide
+        whyJetsSlides
 
         seqRSlide
+        kinematicsBackgroundSlide
         seqRContinuedSlide
 
         otherOptionsSlide
@@ -625,16 +690,19 @@ fuzzyTalkView = docTypeHtml $ do
         sigmaCorrSlide
         sigmaTaggingSlide
 
-        pileupIntroSlide
         pileupEDSlide
-        pileupCorrectionSlide
         pileupCorrectedEDSlide
         pileupHistoSlide
 
         conclusionsSlide
+        openQuestionsSlide
         questionsSlide
 
         backupSlides
+        -- moved to backup
+        pileupIntroSlide
+        pileupCorrectionSlide
+
 
     script ! src "resource/lib/js/head.min.js" $ mempty
     script ! src "resource/js/reveal.js" $ mempty
