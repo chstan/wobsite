@@ -61,9 +61,9 @@ resumeInserts ts =
     --p "To obtain a programming internship at Ginkgo Bioworks.",
 
     resumeSection (h4 $ "Education") $ do
-      justified (p $ i "Stanford University") (p "GPA 4.00/4.00")
-      H.div $ p "Pursuing BS with Honors in Physics"
-      H.div $ p "To be conferred in June 2015",
+      justified (p $ i "Stanford University") (p "GPA 4.01")
+      H.div $ p "Graduated June 2015, BS Physics with Distinction and Honors,"
+      H.div $ p "concentration in theoretical physics",
 
     resumeSection (h4 $ "Coursework") $ do
       --p $ toHtml $ (intercalate ", " relevantCoursesPhysics)
@@ -84,7 +84,7 @@ resumeInserts ts =
                        \plots and histograms to communicate results."
 
       justifiedLeader (p $ do {b "Instructor"; ", Stanford Physics 91SI" })
-                      (p $ preEscapedString "March 2015 &ndash; present")
+                      (p $ preEscapedString "March 2015 &ndash; June 2015")
       resumeParagraphs "Designed and created lecture materials, met with faculty \
                        \to plan the curriculum, and lectured weekly for Physics \
                        \91SI, scientific computing in Python, at Stanford."

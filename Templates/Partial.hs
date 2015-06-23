@@ -44,7 +44,7 @@ renderTalkRecord
       p $ do
         strong $ toHtml (" " ++ (unpack tPresentationTitle))
         toHtml $ " at " ++ (unpack tName) ++ ", " ++ (unpack tLocation) ++
-                 ", " ++ (unpack tDate) ++ ".  "
+                 ". " ++ (unpack tDate) ++ ".  "
         talkLink tPresentationURL
 
 renderBookRecord :: BookRecord -> Html

@@ -43,9 +43,13 @@ talksAndPapersContent talks = do
       H.div ! A.class_ "talks-section-header" $
         p $ "Invited talks"
       mapM_ renderTalkRecord invited_talks
+    H.div ! A.class_ "talks-container" $ do
+      H.div ! A.class_ "talks-section-header" $
+        p $ "Other talks + degree defenses"
+      mapM_ renderTalkRecord other_talks
   where
     invited_talks = filter invited talks
-    _ = filter (not . invited) talks
+    other_talks = filter (not . invited) talks
 
 booksContent :: [BookRecord] -> Html
 booksContent books = do

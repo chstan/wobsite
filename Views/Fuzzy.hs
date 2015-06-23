@@ -314,6 +314,8 @@ likelihoodSlide = slide $ do
       inlineMathColored "green" "p_{T}"
       inlineMathColored "black" ","
       inlineMathColored "green" "\\rho"
+      inlineMathColored "black" ","
+      inlineMathColored "green" "E"
       inlineMathColored "black" ")"
 
   div ! style "margin-top:60px" $ do
@@ -496,7 +498,7 @@ sigmaTaggingSlide = slide $ do
   img ! style "margin-top:30px" ! width "800px"
     ! (customAttribute "data-src" "resource/img/tag.png")
 
-  p "Still useful for tagging!"
+  p "Powerful for jet tagging!"
 
 safetySlide = slide $ do
   h3 ! left $ "Likelihood"
@@ -603,7 +605,7 @@ conclusionsSlide = slide $ do
 
   div ! style "margin-top: 50px;" $ fadeIn 3 $ p "Flexible model capable of learning event structure"
 
-  div ! style "margin-top: 50px;" $ fadeIn 4 $ p "Improves tagging performance on Monte Carlo"
+  div ! style "margin-top: 50px;" $ fadeIn 4 $ p "Enhances the discovery potential of the LHC to new particles"
 
 
 questionsSlide = slide $ do
@@ -653,6 +655,12 @@ backupSlides = do
           ! (customAttribute "data-src" "resource/img/pt_cut.png")
 
 
+oldEventDisplaySlide = slide $ do
+  h3 $ "Jet Clustering at Hadron Colliders"
+
+  div ! style "margin-top:80px;" $ img ! width "600px" ! (customAttribute "data-src" "resource/img/jet.png")
+
+
 fuzzyTalkView :: Html
 fuzzyTalkView = docTypeHtml $ do
   revealHead
@@ -665,6 +673,7 @@ fuzzyTalkView = docTypeHtml $ do
 
         seqRSlide
         kinematicsBackgroundSlide
+        oldEventDisplaySlide
         seqRContinuedSlide
 
         otherOptionsSlide
@@ -676,11 +685,10 @@ fuzzyTalkView = docTypeHtml $ do
         likelihoodSlide
         safetySlide
 
-        emAlgSlide
-        emExampleSlide
+
         eventDisplaySlides
 
-        pTSlide
+
         massSlide
         wBosonSlide
         massTakeawaysSlide
@@ -700,6 +708,9 @@ fuzzyTalkView = docTypeHtml $ do
 
         backupSlides
         -- moved to backup
+        emAlgSlide
+        emExampleSlide
+        pTSlide
         pileupIntroSlide
         pileupCorrectionSlide
 

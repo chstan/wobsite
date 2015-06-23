@@ -133,6 +133,10 @@ button {
     width: 500px;
 }
 
+.talks-container {
+    margin-bottom: 120px;
+}
+
 .books-content {
     margin-top: 70px;
     width: 500px;
