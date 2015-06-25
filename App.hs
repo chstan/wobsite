@@ -148,7 +148,6 @@ applicationRoutes =
 
 application :: Request -> IO Response
 application req = do
-  putStrLn $ show req
   let ProcessedPath p = path(req)
   let h = runRoute applicationRoutes p
   response <- case h of
