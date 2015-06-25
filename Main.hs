@@ -14,6 +14,7 @@ import Control.Concurrent
 import Control.Concurrent.Async (race)
 import Control.Concurrent.STM
 import Data.List.Split (splitOn)
+import Data.Text as T (strip, pack)
 
 import Data.Config
 import ResponseRequest
@@ -24,7 +25,7 @@ import Middleware
 appWithMiddleware :: Request -> IO Response
 appWithMiddleware req =
   ((fmap cacheImages) . (liftM $ compressResponse req) . application .
-   breakPath . breakQueryString) req
+   breakPath . extractPostParams . breakQueryString) req
 
 respond :: Request -> Socket -> IO ()
 respond req c  = do
@@ -41,7 +42,8 @@ parseRequestType s = case s of
 parseOptionsHelper :: [BSL8.ByteString] -> [(String, String)] -> [(String, String)]
 parseOptionsHelper [] acc = acc
 parseOptionsHelper (f:xs) acc
-  | (length (BSL8.words f)) < 2 = acc
+  | (strip $ T.pack $ BSL8.unpack f) == "" = parseOptionsHelper xs acc
+  | (length (BSL8.words f)) < 2 = parseOptionsHelper xs (acc ++ [("Body", BSL8.unpack f)])
   | otherwise = parseOptionsHelper xs (acc ++ [builtOption])
  where
   option = reverse . tail . reverse . head . words $ BSL8.unpack f

@@ -3,6 +3,7 @@ module Middleware
        ( breakPath
        , compressResponse
        , cacheImages
+       , extractPostParams
        , breakQueryString) where
 
 import qualified Data.Map as Map
@@ -13,16 +14,32 @@ import qualified Data.ByteString.Char8 as BS8
 
 import ResponseRequest
 
+parseArgPair :: String -> (String, String)
+parseArgPair s = (var, val)
+  where var = head ps
+        val = (BS8.unpack . (urlDecode True) . BS8.pack . head . tail) ps
+        ps = splitOn "=" s
+
+extractPostParams :: Request -> Request
+extractPostParams req = case (rtype req) of
+  GET -> req
+  POST -> case Map.lookup "Body" (options req) of
+    Nothing -> req
+    Just b -> req { options = Map.delete "Body" (options req),
+                    queryParameters = Map.union (Map.fromList args) oldPs }
+      where oldPs = (queryParameters req)
+            args = map parseArgPair $ splitOn "&" b
+
 breakQueryString :: Request -> Request
 breakQueryString req = case path(req) of
   ProcessedPath _ -> req -- improper use pattern
   RawPath p -> case length (splitOn "?" p) of
     2 -> req {path = RawPath actualPath,
-              queryParameters = Map.fromList $ zip argVars argVals }
+              queryParameters = Map.union oldPs
+                                (Map.fromList args) }
     _ -> req
-    where argVals = map (BS8.unpack . (urlDecode True) . BS8.pack . head . tail) argPairs
-          argVars = map head argPairs
-          argPairs = map (splitOn "=") $ splitOn "&" queryArgs
+    where oldPs = (queryParameters req)
+          args = map parseArgPair (splitOn "&" queryArgs)
           actualPath:queryArgs:[] = splitOn "?" p
 
 breakPath :: Request -> Request

@@ -113,6 +113,7 @@ navPartial =
       li $ H.a ! A.href "/writing" $ "writing"
       li $ H.a ! A.href "/books" $ "reading"
       li $ H.a ! A.href "/scheme" $ "scheme"
+      li $ H.a ! A.href "/dominion" $ "dominion"
       li $ H.a ! A.href "/chess" $ "chess"
 
 
@@ -126,6 +127,7 @@ standardPartial content = docTypeHtml $ do
          ! A.rel "stylesheet" ! A.type_ "test/css"
     link ! A.href "/resource/style_test.css"
          ! A.rel "stylesheet" ! A.type_ "text/css"
+    H.script ! A.src "https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.18/require.min.js" $ mempty
     googleAnalyticsHook
   H.body $ do
     H.div ! A.class_ "container" $ do

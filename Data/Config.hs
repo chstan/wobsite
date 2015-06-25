@@ -4,7 +4,6 @@ module Data.Config
        , EnvironmentType (Development, Production)
        , envAndPortFromLines) where
 
-import Control.Monad (liftM5)
 import Control.Concurrent.STM.TVar
 import Data.Map as Map
 import Safe (readMay)
@@ -15,13 +14,17 @@ data EnvironmentType = Development | Production deriving (Show, Read, Eq)
 
 data ServerEnvironment = Environment { engineCommand :: String,
                                        schemeCommand :: String,
+                                       dominionCommand :: String,
+                                       javaPolicyPath :: String,
                                        engineRecordPath :: String,
                                        dataPath :: String,
                                        envType :: EnvironmentType } deriving (Show)
 
 envAndPortFromLines :: [String] -> (Maybe ServerEnvironment, Maybe Int)
-envAndPortFromLines (dev:pn:cc:sc:rp:od:[]) =
-  (liftM5 Environment (Just cc) (Just sc) (Just rp) (Just od) (readMay dev), readMay pn)
+envAndPortFromLines (dev:pn:cc:sc:dc:jp:rp:od:[]) =
+  case (readMay dev, readMay pn) of
+   (Just jdev, Just jpn) -> (Just $ Environment cc sc dc jp rp od jdev, Just jpn)
+   _ -> (Nothing, Nothing)
 envAndPortFromLines _ = (Nothing, Nothing)
 
 

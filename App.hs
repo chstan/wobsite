@@ -76,6 +76,20 @@ applicationRoutes =
               matchNone
               return schemeHandler
 
+         , do match "dominion"
+              match "eval"
+              matchNone
+              return dominionTournamentHandler
+
+         , do match "dominion"
+              match "poll"
+              matchNone
+              return dominionPollHandler
+
+         , do match "dominion"
+              matchNone
+              return dominionHandler
+
          , do match "chess"
               return computerChessHandler
 

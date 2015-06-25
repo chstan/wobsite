@@ -13,6 +13,9 @@ module Handlers
         chessHandler,
         schemeHandler,
         schemeEvalHandler,
+        dominionHandler,
+        dominionTournamentHandler,
+        dominionPollHandler,
         computerChessHandler,
         chessResultHandler,
         catHandler,
@@ -31,6 +34,7 @@ module Handlers
         robotsHandler) where
 
 import Data.Time.LocalTime
+import Data.Text (unpack, pack, strip)
 import Data.Time.Calendar
 import Safe (atMay)
 import Data.Time.Clock (getCurrentTime)
@@ -40,7 +44,7 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
 import Control.Concurrent.STM (atomically, modifyTVar, readTVar)
 import Data.UUID.V4 (nextRandom)
-import Data.List (intercalate)
+import Data.List (intercalate, any, delete)
 import qualified Data.Text as T
 import Data.Text.Lazy.Encoding
 import qualified Data.ByteString.Char8 as BS8
@@ -61,10 +65,12 @@ import Views.Fuzzy
 import Views.BlogEntry
 import Views.Chess
 import Views.Scheme
+import Views.Dominion
 
 import Data.Gym
 import Data.Chess
 import Data.Scheme
+import Data.Dominion
 import Data.Queryable
 import Data.BlogEntry (lookupBlogEntry, markdown_location)
 
@@ -175,6 +181,69 @@ schemeEvalHandler req = do
            jsonHandler (schemeJSONView pls) req
            where pls = fmap (dropPrefix "-> ") nels
 
+dominionPollHandler :: RequestHandler
+dominionPollHandler req =
+  case Map.lookup "uuid" (queryParameters req) of
+   Nothing -> jsonHandler "{\"reason\":\"no-uuid\"}" req
+   Just uuid -> do
+     hs <- atomically $ readTVar (engineHandles $ serverConfig req)
+     case Map.lookup uuid hs of
+      Nothing -> jsonHandler "{\"reason\":\"no-active-process\"}" req
+      Just h -> do
+        let uls = unprocessedLines h
+            sls = map (unpack . strip . pack) uls
+            finished = any ((==) "DONE") sls
+            ls = delete "DONE" sls
+
+        atomically $ do
+          case finished of
+           True -> modifyTVar (engineHandles $ serverConfig req)
+                   (Map.delete uuid)
+           False -> modifyTVar (engineHandles $ serverConfig req)
+                    (Map.adjust clearQueryableLines uuid)
+
+        case length ls of
+         0 -> jsonHandler "{}" req
+         _ -> jsonHandler ("{\"lines\":[\"" ++
+                           (intercalate "\", \"" ls) ++
+                           "\"]}") req
+
+dominionTournamentHandler :: RequestHandler
+dominionTournamentHandler req = do
+  case sequence [Map.lookup "uuid" (queryParameters req),
+                 Map.lookup "exp"  (queryParameters req)] of
+   Nothing -> jsonHandler ("{\"reqs\":\"" ++ (show $ req) ++ "\"}") req
+   Just (uuid:exp:[]) -> do
+     let env = serverEnv $ serverConfig $ req
+         path = dataPath env ++ "policies/" ++ uuid ++ ".clj"
+
+     writeFile path exp
+
+     dominionHandle <- createOrFindQueryable "java"
+                     ["-Djava.security.policy=" ++ (javaPolicyPath env),
+                      "-jar", dominionCommand env, path]
+                     uuid killDominion (const $ return ())
+                     (engineHandles $ serverConfig req)
+     case queryableState dominionHandle of
+      IDLE -> do
+        atomically $ modifyTVar (engineHandles $ serverConfig req)
+          $ Map.adjust (setQueryableState RUNNING) uuid
+        BSL8.hPutStrLn (queryableStdIn dominionHandle) (BSL8.pack $ (exp))
+        hFlush (queryableStdIn dominionHandle)
+        jsonHandler (schemeJSONView []) req
+      RUNNING -> do
+        let ls = unprocessedLines dominionHandle
+        case ls of
+         [] -> do
+           jsonHandler (schemeJSONView []) req
+         nels -> do
+           atomically $ do
+              modifyTVar (engineHandles $ serverConfig req)
+                (Map.adjust clearQueryableLines uuid)
+              modifyTVar (engineHandles $ serverConfig req)
+                (Map.adjust (setQueryableState IDLE) uuid)
+           jsonHandler (schemeJSONView pls) req
+           where pls = fmap (dropPrefix "-> ") nels
 
 computerChessHandler :: RequestHandler
 computerChessHandler req
@@ -217,6 +286,11 @@ computerChessHandler req
   where ProcessedPath pathElems = path(req)
         fenString = replaceChar '~' '/' (replaceChar '_' ' ' rawFenString)
         (uuidString, rawFenString) = (pathElems !! 1, pathElems !! 2)
+
+dominionHandler :: RequestHandler
+dominionHandler req = do
+  return $ Response "HTTP/1.1" 200 UNZIP HTML Dynamic $ HR.renderHtml $
+    dominionView
 
 schemeHandler :: RequestHandler
 schemeHandler req = do
