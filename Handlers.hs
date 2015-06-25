@@ -40,6 +40,7 @@ import Safe (atMay)
 import Data.Time.Clock (getCurrentTime)
 import Data.Time.Format
 import System.IO (hFlush)
+import System.Process (terminateProcess, waitForProcess)
 import Data.Maybe (fromMaybe)
 import qualified Data.Map as Map
 import Control.Concurrent.STM (atomically, modifyTVar, readTVar)
@@ -195,12 +196,14 @@ dominionPollHandler req =
             finished = any ((==) "DONE") sls
             ls = delete "DONE" sls
 
-        atomically $ do
-          case finished of
-           True -> modifyTVar (engineHandles $ serverConfig req)
-                   (Map.delete uuid)
-           False -> modifyTVar (engineHandles $ serverConfig req)
-                    (Map.adjust clearQueryableLines uuid)
+        case finished of
+         True -> do
+           terminateProcess (queryableProcess h)
+           waitForProcess (queryableProcess h)
+           atomically $ modifyTVar (engineHandles $ serverConfig req)
+             (Map.delete uuid)
+         False -> atomically $ modifyTVar (engineHandles $ serverConfig req)
+                  (Map.adjust clearQueryableLines uuid)
 
         case length ls of
          0 -> jsonHandler "{}" req
