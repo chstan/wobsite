@@ -129,6 +129,7 @@ instance Show Response where
               "Content-Type: " ++ show(contentDescription(resp)) ++ "\r\n" ++
               "Content-Length: " ++ show(BSL8.length $ body resp) ++ "\r\n" ++
               "Content-Encoding: " ++ show(encoding resp) ++ "\r\n" ++
+              "Connection: " ++ "close" ++ "\r\n" ++
               show(cachingInfo resp) ++
               "\r\n" ++ (unpack $ body resp) ++ "\r\n"
 
