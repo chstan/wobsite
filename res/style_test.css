@@ -113,9 +113,18 @@ body, div, p, h1, h2, h3, h4, h5, h6 {
 }
 
 button {
-  color: #222222;
-  background: rgba(0,0,0,0);
-  border: solid 1px #666666;
+    margin: 0;
+    height: 40px;
+    border: solid 2px rgb(64,64,64);
+    border-top: 0;
+
+    background-color: white;
+    font-size: 18px;
+    color: rgb(80,80,80);
+}
+
+button:hover {
+    background-color: rgba(109, 189, 35, 0.2);
 }
 
 .talks-content .talks-wrapper p {
@@ -194,6 +203,15 @@ h1, h2, h3, h4, h5, h6 {
 #dominion-header {
     position: relative;
     margin-top: 70px;
+}
+
+#opponent-div {
+    display: none;
+    margin-top: 20px;
+}
+
+#opponent-div img {
+    margin: auto;
 }
 
 #dominion-header p {

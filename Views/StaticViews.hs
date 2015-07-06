@@ -107,6 +107,10 @@ chessContent uuid mr = do
       p "Once you've played a move, please give a moment or two for the engine to reply."
       boastAboutRecord mr
   H.div ! A.id "board" ! A.style "width: 600px" $ mempty
+  H.div $ H.button ! A.type_ "button" ! A.id "opponent-button" $ "See your opponent!"
+  H.div ! A.id "opponent-div" $
+    H.img ! A.src "/resource/img/kashi_opponent.jpg" ! A.width "200px"
+
   H.script ! A.src "http://cdnjs.cloudflare.com/ajax/libs/json3/3.3.2/json3.min.js" $ mempty
   H.script ! A.src "http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" $ mempty
   H.link ! A.href "/resource/css/chessboard-0.3.0.min.css" ! A.rel "stylesheet" ! A.type_ "text/css"

@@ -1,4 +1,18 @@
 var init = function() {
+    var showing = false;
+
+    $("#opponent-button").click(function() {
+        if (showing) {
+            $("#opponent-div").hide();
+            $(this).text('See your opponent!');
+            showing = false;
+        } else {
+            $("#opponent-div").show();
+            $(this).text('Too intimidating!');
+            showing = true;
+        }
+    });
+
     var gameState = "ongoing";
     var board,
         game = new Chess();
