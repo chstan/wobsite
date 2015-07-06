@@ -91,6 +91,8 @@ applicationRoutes =
               return dominionHandler
 
          , do match "chess"
+              match "poll"
+              matchNone
               return computerChessHandler
 
          , do match "resource"

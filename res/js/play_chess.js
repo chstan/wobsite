@@ -36,81 +36,82 @@ var init = function() {
         }
 
         var FEN = game.fen();
-        FEN = FEN.replace(/ /g, "_");
-        FEN = FEN.replace(/\//g, "~");
-        var pollingURL = '/chess/' + uuid + "/" + FEN;
+        var pollingURL = '/chess/poll';
         (function pollServerForMove() {
-            $.getJSON(pollingURL, function(data, textStatus, jqXHR) {
-                if (data.bestMove) {
-                    // insert the dash that chess.js wants
-                    var parsedMove;
-                    if (data.bestMove.length === 4) {
-                        parsedMove = {
-                            from: data.bestMove.slice(0, 2),
-                            to: data.bestMove.slice(2, 4)
-                        }
-                    } else {
-                        parsedMove = {
-                            from: data.bestMove.slice(0, 2),
-                            to: data.bestMove.slice(2, 4),
-                            promotion: data.bestMove.slice(4,5)
-                        }
-                    }
-                    game.move(parsedMove);
-                    board.position(game.fen());
-                    if (game.moves().length === 0 || game.in_draw() === true ||
-                        game.in_threefold_repetition() === true) {
-                        if (gameState === "ongoing") {
-                            gameState = "finished";
-                            result = "";
-                            if (game.in_checkmate() === true) {
-                                // server won
-                                result = "win";
-                            } else {
-                                result = "tie";
-                            }
-                            var resultURL = '/chess/result/' + uuid + '/' + result;
-                            (function notifyServerOfResult() {
-                                $.getJSON(resultURL, function(data, textStatus, jqXHR){});
-                            })();
-                        }
-                    }
-                } else {
-                    setTimeout(pollServerForMove, 1000);
-                }
-            });
+            $.getJSON(pollingURL,
+                      {'uuid': uuid,
+                       'FEN': FEN},
+                      function(data, textStatus, jqXHR) {
+                          if (data.bestMove) {
+                              // insert the dash that chess.js wants
+                              var parsedMove;
+                              if (data.bestMove.length === 4) {
+                                  parsedMove = {
+                                      from: data.bestMove.slice(0, 2),
+                                      to: data.bestMove.slice(2, 4)
+                                  }
+                              } else {
+                                  parsedMove = {
+                                      from: data.bestMove.slice(0, 2),
+                                      to: data.bestMove.slice(2, 4),
+                                      promotion: data.bestMove.slice(4,5)
+                                  }
+                              }
+                              game.move(parsedMove);
+                              board.position(game.fen());
+                              if (game.moves().length === 0 || game.in_draw() === true ||
+                                  game.in_threefold_repetition() === true) {
+                                  if (gameState === "ongoing") {
+                                      gameState = "finished";
+                                      result = "";
+                                      if (game.in_checkmate() === true) {
+                                          // server won
+                                          result = "win";
+                                      } else {
+                                          result = "tie";
+                                      }
+                                      var resultURL = '/chess/result/' + uuid + '/' + result;
+                                      (function notifyServerOfResult() {
+                                          $.getJSON(resultURL, function(data, textStatus, jqXHR){});
+                                      })();
+                                  }
+                              }
+                          } else {
+                              setTimeout(pollServerForMove, 1000);
+                          }
+                      });
         }());
-    };
+};
 
-    var onDrop = function(source, target) {
-        // see if the move is legal
-        var move = game.move({
-            from: source,
-            to: target,
-            promotion: 'q' // NOTE: always promote to a queen for example simplicity
-        });
+var onDrop = function(source, target) {
+    // see if the move is legal
+    var move = game.move({
+        from: source,
+        to: target,
+        promotion: 'q' // NOTE: always promote to a queen for example simplicity
+    });
 
-        // illegal move
-        if (move === null) return 'snapback';
+    // illegal move
+    if (move === null) return 'snapback';
 
-        // consult server for computer's move
-        makeComputerMove();
-    };
+    // consult server for computer's move
+    makeComputerMove();
+};
 
-    // update the board position after the piece snap
-    // for castling, en passant, pawn promotion
-    var onSnapEnd = function() {
-        board.position(game.fen());
-    };
+// update the board position after the piece snap
+// for castling, en passant, pawn promotion
+var onSnapEnd = function() {
+    board.position(game.fen());
+};
 
-    var cfg = {
-        draggable: true,
-        position: 'start',
-        onDragStart: onDragStart,
-        onDrop: onDrop,
-        onSnapEnd: onSnapEnd
-    };
+var cfg = {
+    draggable: true,
+    position: 'start',
+    onDragStart: onDragStart,
+    onDrop: onDrop,
+    onSnapEnd: onSnapEnd
+};
 
-    board = new ChessBoard('board', cfg);
+board = new ChessBoard('board', cfg);
 }; // end init()
 $(document).ready(init);

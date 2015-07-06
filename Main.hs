@@ -87,9 +87,8 @@ connectionAccept c config = do
          Just request -> do
            respond request c
            case Map.lookup "Connection" $ options request of
-            Just "keep-alive" -> connectionAccept c config
-            Nothing           -> connectionAccept c config
-            Just _            -> return ()
+            -- need to address this better
+            _ -> return ()
 
 welcomeMessage :: (Show a, Num a) => ServerEnvironment -> a -> IO ()
 welcomeMessage e pn = do

@@ -249,9 +249,11 @@ dominionTournamentHandler req = do
            where pls = fmap (dropPrefix "-> ") nels
 
 computerChessHandler :: RequestHandler
-computerChessHandler req
-  | Prelude.length pathElems < 3 = jsonHandler (chessJSONView "" []) req
-  | otherwise = do
+computerChessHandler req = do
+  case sequence [Map.lookup "uuid" (queryParameters req),
+                 Map.lookup "FEN" (queryParameters req)] of
+   Nothing -> jsonHandler (chessJSONView "" []) req
+   Just (uuidString:fenString:[]) -> do
       engineHandle <- createOrFindQueryable (engineCommand $ serverEnv $ serverConfig req)
                       (["--uci", "engine.log"])
                       uuidString killEngine chessAfterCreation
@@ -285,10 +287,6 @@ computerChessHandler req
 
           -- no move, ah well
           Nothing -> jsonHandler (chessJSONView "" []) req
-
-  where ProcessedPath pathElems = path(req)
-        fenString = replaceChar '~' '/' (replaceChar '_' ' ' rawFenString)
-        (uuidString, rawFenString) = (pathElems !! 1, pathElems !! 2)
 
 dominionHandler :: RequestHandler
 dominionHandler req = do
